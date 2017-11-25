@@ -40,6 +40,11 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
     }
 
     @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+    }
+
+    @Override
     public void onBindViewHolder(EventListAdapter holder, int position) {
         holder.name.setText(list.get(position).getName());
     }

@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Lori Project</string>
     <string name="action_settings">Настройки</string>
+    <string name="passwordText">Пароль</string>
+    <string name="loginText">Логин</string>
+    <string name="saveText">Сохранить</string>
+    <string name="textPort">Порт</string>
+    <string name="HostText">Хост</string>
 </resources>

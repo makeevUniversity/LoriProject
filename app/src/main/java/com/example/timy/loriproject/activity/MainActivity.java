@@ -1,6 +1,9 @@
 package com.example.timy.loriproject.activity;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -21,6 +24,9 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnItemClick;
+import butterknife.OnItemSelected;
+import butterknife.OnLongClick;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -38,12 +44,16 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @BindView(R.id.swipeRefresh)
     SwipeRefreshLayout swipeRefreshLayout;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
+
+        singIn();
 
         setSupportActionBar(toolbar);
 
@@ -72,28 +82,45 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
+    private void singIn(){
+        SharedPreferences sharedPreferences= PreferenceManager.getDefaultSharedPreferences(this);
+
+        String login=sharedPreferences.getString("login","");
+        String pass=sharedPreferences.getString("pass","");
+        if(!login.isEmpty() && !pass.isEmpty()){
+            //выполнить запрос
+        }else {
+            Snackbar.make(fab, "Проверь настройки!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+    }
+
     @OnClick(R.id.fab)
     void onClickFab(){
         Snackbar.make(fab, "Нажали", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }
 
+    @OnLongClick(R.id.fab)
+    boolean onLongClickFab(){
+        Snackbar.make(fab, "Задержали", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
+        return true;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent=new Intent(this,SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
