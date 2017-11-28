@@ -3,12 +3,9 @@ package com.example.timy.loriproject.restApi.domain;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 
-/**
- * Created by dmitr on 24.11.2017.
- */
-
-public class User {
+public class User implements Serializable{
 
     @SerializedName("id")
     @Expose

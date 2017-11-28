@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -18,6 +19,8 @@ import android.view.MenuItem;
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.adapters.AdapterListEvent;
 import com.example.timy.loriproject.adapters.vo.TestVo;
+import com.example.timy.loriproject.restApi.LoriApiClass;
+import com.example.timy.loriproject.restApi.domain.JsonVo;
 
 import java.util.List;
 
@@ -27,8 +30,12 @@ import butterknife.OnClick;
 import butterknife.OnItemClick;
 import butterknife.OnItemSelected;
 import butterknife.OnLongClick;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+
 
     private AdapterListEvent adapterListEvent;
 
@@ -45,21 +52,15 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     SwipeRefreshLayout swipeRefreshLayout;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         ButterKnife.bind(this);
-
-        singIn();
-
         setSupportActionBar(toolbar);
-
         eventList.setLayoutManager(new LinearLayoutManager(this));
-        List<TestVo> list=new TestVo("").getTestVo();
-        adapterListEvent=new AdapterListEvent(list);
+        List<TestVo> list = new TestVo("").getTestVo();
+        adapterListEvent = new AdapterListEvent(list);
         eventList.setAdapter(adapterListEvent);
         eventList.addOnItemTouchListener(new AdapterListEvent.AdapterClickListener(getApplicationContext(),
                 eventList,
@@ -82,27 +83,42 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
-    private void singIn(){
-        SharedPreferences sharedPreferences= PreferenceManager.getDefaultSharedPreferences(this);
+    private void singIn() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        String login=sharedPreferences.getString("login","");
-        String pass=sharedPreferences.getString("pass","");
-        if(!login.isEmpty() && !pass.isEmpty()){
+        String login = sharedPreferences.getString("login", "");
+        String pass = sharedPreferences.getString("pass", "");
+        String port = sharedPreferences.getString("port", "");
+        String host = sharedPreferences.getString("host", "");
+        if (!login.isEmpty() && !pass.isEmpty() && !port.isEmpty() && !host.isEmpty()) {
             //выполнить запрос
-        }else {
+            LoriApiClass.getApi().login(login, pass).enqueue(new Callback<JsonVo>() {
+                @Override
+                public void onResponse(@NonNull Call<JsonVo> call, @NonNull Response<JsonVo> response) {
+                    Snackbar.make(fab, "Запрос выполнен!", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<JsonVo> call, @NonNull Throwable t) {
+                    Snackbar.make(fab, "Проверь настройки!", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+            });
+        } else {
             Snackbar.make(fab, "Проверь настройки!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
     }
 
     @OnClick(R.id.fab)
-    void onClickFab(){
+    void onClickFab() {
         Snackbar.make(fab, "Нажали", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }
 
     @OnLongClick(R.id.fab)
-    boolean onLongClickFab(){
+    boolean onLongClickFab() {
         Snackbar.make(fab, "Задержали", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
         return true;
@@ -119,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
-            Intent intent=new Intent(this,SettingsActivity.class);
+            Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
         }
@@ -129,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     @Override
     public void onRefresh() {
+        singIn();
         Snackbar.make(fab, "Обновили", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
         swipeRefreshLayout.setRefreshing(false);
