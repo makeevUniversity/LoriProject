@@ -7,4 +7,5 @@
     <string name="textPort">Порт</string>
     <string name="HostText">Хост</string>
     <string name="action_close_session">Закрыть сессию</string>
+    <string name="remove_time_entry">Удалить</string>
 </resources>

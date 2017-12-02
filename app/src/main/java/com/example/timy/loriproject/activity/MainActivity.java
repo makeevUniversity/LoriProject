@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         adapterListEvent = new AdapterListEvent(list);
         eventList.setAdapter(adapterListEvent);
 
-        RecyclerView.ItemAnimator itemAnimator=new DefaultItemAnimator();
+        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
         eventList.setItemAnimator(itemAnimator);
 
         eventList.addOnItemTouchListener(new AdapterListEvent.AdapterClickListener(getApplicationContext(),
@@ -101,6 +101,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         list.add(new TimeEntry());
         adapterListEvent.notifyDataSetChanged();
         eventList.invalidate();
+
+        Intent intent = new Intent(this, AddActivity.class);
+        startActivity(intent);
+
         Snackbar.make(fab, "Нажали", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }
@@ -216,10 +220,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @RequiresApi(api = Build.VERSION_CODES.N)
                 @Override
                 public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
-                    int code=response.code();
+                    int code = response.code();
 
-                    if(code==200){
-                       list=response.body();
+                    if (code == 200) {
+                        list = response.body();
                         if (list != null) {
                             list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
                             adapterListEvent.notifyDataSetChanged();

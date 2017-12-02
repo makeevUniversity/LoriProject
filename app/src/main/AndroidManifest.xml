@@ -3,13 +3,13 @@
     package="com.example.timy.loriproject">
 
     <application
+        android:name=".restApi.LoriApiClass"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:name=".restApi.LoriApiClass">
+        android:theme="@style/AppTheme">
         <activity
             android:name=".activity.MainActivity"
             android:label="@string/app_name"
@@ -22,8 +22,10 @@
         </activity>
         <activity
             android:name=".activity.SettingsActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-        </activity>
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activity.AddActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>
