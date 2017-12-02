@@ -3,10 +3,6 @@ package com.example.timy.loriproject.adapters.vo;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by dmitr on 23.11.2017.
- */
-
 public class TestVo {
     private String name;
 

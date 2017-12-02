@@ -14,21 +14,19 @@ import android.widget.TextView;
 
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.adapters.vo.TestVo;
+import com.example.timy.loriproject.restApi.domain.TimeEntry;
 
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-/**
- * Created by dmitr on 21.11.2017.
- */
 
 public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.EventListAdapter> {
 
-    List<TestVo> list;
+    List<TimeEntry> list;
 
-    public AdapterListEvent(List<TestVo> list) {
+    public AdapterListEvent(List<TimeEntry> list) {
         this.list = list;
     }
 
@@ -46,7 +44,7 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
 
     @Override
     public void onBindViewHolder(EventListAdapter holder, int position) {
-        holder.name.setText(list.get(position).getName());
+        holder.name.setText(list.get(position).getTaskName());
     }
 
     @Override

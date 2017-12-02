@@ -65,13 +65,18 @@ public class SettingsActivity extends AppCompatActivity {
         String host = editHostTextView.getText().toString();
         String port = editPortTextView.getText().toString();
 
-        sp.edit().putString("login", login).apply();
-        sp.edit().putString("pass", pass).apply();
-        sp.edit().putString("host", host).apply();
-        sp.edit().putString("port", port).apply();
-
-        Snackbar.make(saveButton, "Настройки сохранены!", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
+        if(!login.isEmpty() && !pass.isEmpty() && !host.isEmpty() && !port.isEmpty()) {
+            sp.edit().putString("login", login).apply();
+            sp.edit().putString("pass", pass).apply();
+            sp.edit().putString("host", host).apply();
+            sp.edit().putString("port", port).apply();
+            Snackbar.make(saveButton, "Настройки сохранены!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            finish();
+        }else {
+            Snackbar.make(saveButton, "Заполните все поля!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
 
     }
 

@@ -7,9 +7,6 @@ import android.preference.PreferenceManager;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-/**
- * Created by dmitr on 25.11.2017.
- */
 
 public class LoriApiClass extends Application {
 
@@ -25,11 +22,13 @@ public class LoriApiClass extends Application {
         String host = sp.getString("host", "localhost");
         String port = sp.getString("port", "8080");
 
-        retrofit = new Retrofit.Builder()
-                .baseUrl("http://"+host + ":" + port)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        loriRestApi = retrofit.create(LoriRestApi.class);
+        if(!host.isEmpty() && !port.isEmpty()) {
+            retrofit = new Retrofit.Builder()
+                    .baseUrl("http://" + host + ":" + port)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            loriRestApi = retrofit.create(LoriRestApi.class);
+        }
     }
 
     public static LoriRestApi getApi() {

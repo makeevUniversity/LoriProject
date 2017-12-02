@@ -1,18 +1,21 @@
 package com.example.timy.loriproject.restApi;
 
-import com.example.timy.loriproject.restApi.domain.JsonVo;
+import com.example.timy.loriproject.restApi.domain.Project;
+import com.example.timy.loriproject.restApi.domain.Task;
+import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.example.timy.loriproject.restApi.domain.User;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
-import retrofit2.http.QueryMap;
+
+import static com.example.timy.loriproject.restApi.QueriesAndTypes.QUERY_PATH;
+import static com.example.timy.loriproject.restApi.QueriesAndTypes.STATIC_PATH;
 
 /**
  * Created by dmitr on 22.11.2017.
@@ -20,26 +23,46 @@ import retrofit2.http.QueryMap;
 
 public interface LoriRestApi {
 
-    String STATIC_PATH = "app/dispatch/api/";
-
     @GET(STATIC_PATH + "login")
-    Call<JsonVo> login(@Query("u") String user,
+    Call<String> login(@Query("u") String user,
                        @Query("p") String password);
 
-//    @GET(STATIC_PATH + "logout")
-//    Call<Void> logout(@Query("session") UUID session);
+    @GET(STATIC_PATH + "logout")
+    Call<Void> logout(@Query("session") String tokken);
 
-//    @POST(STATIC_PATH+"query.json")
-//    Call<List<String>> loadUsersByLogin(@Body LoadUserLoginRequest request);
+    @GET(STATIC_PATH + QUERY_PATH)
+    Call<List<User>> getUsersEntity(@Query("e") String entityName,
+                                    @Query("q") String query,
+                                    @Query("s") String tokken);
 
-//    @GET(STATIC_PATH + "query.json")
-//    Call<List<String>> executeQuery(@Query("e") String entity,
-//                                    @Query("q") String query,
-//                                    @QueryMap Map<String, Object> parameters,
-//                                    @Query("view") String view);
+    @GET(STATIC_PATH + QUERY_PATH)
+    Call<List<User>> getUserEntity(@Query("e") String entityName,
+                                   @Query("q") String query,
+                                   @Query("s") String tokken,
+                                   @Query("login") String login);
 
-//    @POST(STATIC_PATH+"service.json")
-//    Call<List<String>> loadActiveProfects(@Body )
+    @GET(STATIC_PATH + QUERY_PATH)
+    Call<List<TimeEntry>> getTimeEntries(@Query("e") String entityName,
+                                         @Query("q") String query,
+                                         @Query("s") String tokken,
+                                         @Query("name") String user,
+                                         @Query("from") String fromDate,
+                                         @Query("to") String toDate);
+
+    @POST(STATIC_PATH + "commit")
+    @Headers("Content-Type: application/json")
+    Call<String> commit(@Query("s") String tokken,
+                        @Body String body);
+
+    @GET(STATIC_PATH + QUERY_PATH)
+    Call<List<Project>> getProjects(@Query("e") String entityName,
+                                    @Query("q") String query,
+                                    @Query("s") String tokken);
+
+    @GET(STATIC_PATH + QUERY_PATH)
+    Call<List<Task>> getTasks(@Query("e") String entityName,
+                              @Query("q") String query,
+                              @Query("s") String tokken);
 
 
 }
