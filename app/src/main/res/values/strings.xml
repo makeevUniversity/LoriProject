@@ -8,4 +8,12 @@
     <string name="HostText">Хост</string>
     <string name="action_close_session">Закрыть сессию</string>
     <string name="remove_time_entry">Удалить</string>
+    <string name="menu_add_time_entry">Добавить TimeEntry</string>
+    <string name="menu_change_week">Открыть календарь</string>
+    <string name="time_button">Задать время</string>
+    <string name="text_time">время</string>
+    <string name="date_button">Задать дату</string>
+    <string name="text_date">дата</string>
+    <string name="spinner_project">Выберите проект</string>
+    <string name="spinner_task">Выберите задачу</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.example.timy.loriproject.activity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -9,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -22,12 +24,14 @@ import android.view.MenuItem;
 
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.adapters.AdapterListEvent;
-import com.example.timy.loriproject.adapters.vo.TestVo;
 import com.example.timy.loriproject.restApi.LoriApiClass;
 import com.example.timy.loriproject.restApi.QueriesAndTypes;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
+import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 
@@ -45,6 +49,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private AdapterListEvent adapterListEvent;
     private SharedPreferences sharedPreferences;
     private List<TimeEntry> list;
+    private static Calendar calendarSelected;
+    private static String fromDate;
+    private static String tillDate;
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -97,16 +104,19 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
 
     @OnClick(R.id.fab)
+    //TODO : зарефакторить
     void onClickFab() {
-        list.add(new TimeEntry());
-        adapterListEvent.notifyDataSetChanged();
-        eventList.invalidate();
-
-        Intent intent = new Intent(this, AddActivity.class);
-        startActivity(intent);
-
-        Snackbar.make(fab, "Нажали", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
+//        list.add(new TimeEntry());
+//        adapterListEvent.notifyDataSetChanged();
+//        eventList.invalidate();
+        String tokken = sharedPreferences.getString("tokken", null);
+        if (tokken != null) {
+            Intent intent = new Intent(this, AddActivity.class);
+            startActivity(intent);
+        } else {
+            Snackbar.make(fab, "Вход не выполнен!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
     }
 
     @OnLongClick(R.id.fab)
@@ -123,8 +133,23 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     @Override
+    //TODO: зарефакторить
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+
+        if (id == R.id.action_calendar) {
+            if (calendarSelected == null) {
+                calendarSelected = Calendar.getInstance();
+            }
+            DatePickerDialog dpd = DatePickerDialog.newInstance(new WeekPickerFragment(), calendarSelected.get(Calendar.YEAR), calendarSelected.get(Calendar.MONTH),
+                    calendarSelected.get(Calendar.DAY_OF_MONTH));
+            dpd.setVersion(DatePickerDialog.Version.VERSION_2);
+            dpd.show(getFragmentManager(), "Диалог");
+            dpd.setOnDismissListener(dialogInterface -> {
+                onRefresh();
+            });
+            return true;
+        }
 
         if (id == R.id.action_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
@@ -203,42 +228,62 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         String tokken = sharedPreferences.getString("tokken", null);
 
         if (tokken == null) {
-            singIn();
+            swipeRefreshLayout.setRefreshing(false);
+            Snackbar.make(fab, "Вход не выполнен!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            return;
         }
 
-        if (tokken != null) {
-            String user = sharedPreferences.getString("login", "");
-            //TODO: Допилить получение даты
-            LoriApiClass.getApi().getTimeEntries(QueriesAndTypes.TYPE_TIME_ENTRIES,
-                    QueriesAndTypes.QUERY_GET_TIME_ENTRIES,
-                    tokken,
-                    user,
-                    "",
-                    "").enqueue(new Callback<List<TimeEntry>>() {
+        String user = sharedPreferences.getString("login", "");
+        //TODO: Допилить получение даты
+        LoriApiClass.getApi().getTimeEntries(QueriesAndTypes.TYPE_TIME_ENTRIES,
+                QueriesAndTypes.QUERY_GET_TIME_ENTRIES,
+                tokken,
+                user,
+                "",
+                "").enqueue(new Callback<List<TimeEntry>>() {
 
 
-                @RequiresApi(api = Build.VERSION_CODES.N)
-                @Override
-                public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
-                    int code = response.code();
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
+                int code = response.code();
 
-                    if (code == 200) {
-                        list = response.body();
-                        if (list != null) {
-                            list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
-                            adapterListEvent.notifyDataSetChanged();
-                            eventList.invalidate();
-                        }
+                if (code == 200) {
+                    list = response.body();
+                    if (list != null) {
+                        list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
+                        adapterListEvent.notifyDataSetChanged();
+                        eventList.invalidate();
                     }
                 }
+            }
 
-                @Override
-                public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
+            @Override
+            public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
 
-                }
-            });
-        }
-
+            }
+        });
         swipeRefreshLayout.setRefreshing(false);
+    }
+
+    public static class WeekPickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
+
+        @Override
+        //TODO: Зарефакторить
+        public void onDateSet(DatePickerDialog view, int year, int monthOfYear, int dayOfMonth) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(year, monthOfYear, dayOfMonth);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            while (calendar.get(Calendar.DAY_OF_WEEK) != calendar.getFirstDayOfWeek()) {
+                calendar.add(Calendar.DATE, -1);
+            }
+            fromDate = sdf.format(calendar.getTime());
+            calendar.add(Calendar.DATE, 6);
+            tillDate = sdf.format(calendar.getTime());
+            calendarSelected = Calendar.getInstance();
+            calendarSelected.set(year, monthOfYear, dayOfMonth);
+
+        }
     }
 }

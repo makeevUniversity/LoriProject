@@ -2,6 +2,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.timy.loriproject.activity.MainActivity">
+
+    <item
+        android:id="@+id/action_calendar"
+        android:icon="@drawable/ic_event_black_24dp"
+        android:title="@string/menu_change_week"
+        app:showAsAction="ifRoom" />
+
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"

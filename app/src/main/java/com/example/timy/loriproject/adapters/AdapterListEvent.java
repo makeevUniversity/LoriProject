@@ -9,7 +9,6 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -17,7 +16,6 @@ import android.widget.TextView;
 
 
 import com.example.timy.loriproject.R;
-import com.example.timy.loriproject.adapters.vo.TestVo;
 import com.example.timy.loriproject.restApi.LoriApiClass;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 

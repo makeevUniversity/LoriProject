@@ -17,10 +17,6 @@ import retrofit2.http.Query;
 import static com.example.timy.loriproject.restApi.QueriesAndTypes.QUERY_PATH;
 import static com.example.timy.loriproject.restApi.QueriesAndTypes.STATIC_PATH;
 
-/**
- * Created by dmitr on 22.11.2017.
- */
-
 public interface LoriRestApi {
 
     @GET(STATIC_PATH + "login")
