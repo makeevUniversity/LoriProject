@@ -19,46 +19,40 @@ import static com.example.timy.loriproject.restApi.QueriesAndTypes.STATIC_PATH;
 
 public interface LoriRestApi {
 
-    @GET(STATIC_PATH + "login")
+    @GET(STATIC_PATH + "login?")
     Call<String> login(@Query("u") String user,
                        @Query("p") String password);
 
-    @GET(STATIC_PATH + "logout")
+    @GET(STATIC_PATH + "logout?")
     Call<Void> logout(@Query("session") String tokken);
 
     @GET(STATIC_PATH + QUERY_PATH)
-    Call<List<User>> getUsersEntity(@Query("e") String entityName,
-                                    @Query("q") String query,
-                                    @Query("s") String tokken);
+    Call<List<User>> getUserEntity(
+            @Query("e") String entityName,
+            @Query("q") String query,
+            @Query("s") String tokken,
+            @Query("login") String login);
 
     @GET(STATIC_PATH + QUERY_PATH)
-    Call<List<User>> getUserEntity(@Query("e") String entityName,
-                                   @Query("q") String query,
-                                   @Query("s") String tokken,
-                                   @Query("login") String login);
+    Call<List<TimeEntry>> getTimeEntries(
+            @Query("e") String entityName,
+            @Query("q") String query,
+            @Query("s") String tokken,
+            @Query("name") String user,
+            @Query("from") String fromDate,
+            @Query("to") String toDate
+    );
 
-    @GET(STATIC_PATH + QUERY_PATH)
-    Call<List<TimeEntry>> getTimeEntries(@Query("e") String entityName,
-                                         @Query("q") String query,
-                                         @Query("s") String tokken,
-                                         @Query("name") String user,
-                                         @Query("from") String fromDate,
-                                         @Query("to") String toDate);
-
-    @POST(STATIC_PATH + "commit")
+    @POST(STATIC_PATH + "commit?")
     @Headers("Content-Type: application/json")
     Call<String> commit(@Query("s") String tokken,
                         @Body String body);
 
     @GET(STATIC_PATH + QUERY_PATH)
-    Call<List<Project>> getProjects(@Query("e") String entityName,
-                                    @Query("q") String query,
-                                    @Query("s") String tokken);
-
-    @GET(STATIC_PATH + QUERY_PATH)
-    Call<List<Task>> getTasks(@Query("e") String entityName,
-                              @Query("q") String query,
-                              @Query("s") String tokken);
+    Call<List<Task>> getTasks(
+            @Query("e") String entityName,
+            @Query("q") String query,
+            @Query("s") String tokken);
 
 
 }

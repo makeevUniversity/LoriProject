@@ -1,6 +1,17 @@
 apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 
+//tasks.whenTaskAdded { task ->
+//    if (task.name.startsWith("lint")) {
+//        task.enabled = false
+//    }
+//}
+//
+//
+//retrolambda {
+//    jvmArgs '-noverify'
+//}
+
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.2"
@@ -35,6 +46,7 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:26.+'
     compile 'com.google.code.gson:gson:2.8.2'
+//    retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
     compile 'com.squareup.retrofit2:retrofit-converters:2.3.0'
     compile 'com.squareup.retrofit2:converter-scalars:2.3.0'

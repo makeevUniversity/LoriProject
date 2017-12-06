@@ -106,6 +106,9 @@ public class AddActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(@NonNull Call<List<Task>> call, @NonNull Response<List<Task>> response) {
 
+                        Log.d("error", String.valueOf(response.code()));
+                        Log.d("error", String.valueOf(response.body()));
+
                         if (response.body() != null) {
                             List<Task> tasks = response.body();
 
@@ -200,6 +203,7 @@ public class AddActivity extends AppCompatActivity {
         LoriApiClass.getApi().commit(tokken, object.toString()).enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+
                 onBackPressed();
             }
 
@@ -247,6 +251,10 @@ public class AddActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(@NonNull Call<List<User>> call, @NonNull Response<List<User>> response) {
                     int code = response.code();
+
+                    Log.d("error", String.valueOf(response.code()));
+                    Log.d("error", String.valueOf(response.body()));
+
                     if (code == 200 && response.body() != null) {
                         userId = response.body().get(0).getId();
                     }
