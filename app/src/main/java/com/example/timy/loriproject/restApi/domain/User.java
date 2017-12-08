@@ -8,12 +8,15 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 
+import io.realm.RealmObject;
+import io.realm.annotations.Ignore;
+
 /**
  * Generate Plain Old Java Objects from JSON or JSON-Schema
  * www.jsonschema2pojo.org
  */
 
-public class User implements Serializable, Parcelable {
+public class User extends RealmObject implements Serializable, Parcelable {
 
 
     @SerializedName("id")
@@ -26,6 +29,7 @@ public class User implements Serializable, Parcelable {
 
     @SerializedName("changePasswordAtNextLogon")
     @Expose
+    @Ignore
     private Object changePasswordAtNextLogon;
 
     @SerializedName("createTs")
@@ -34,34 +38,42 @@ public class User implements Serializable, Parcelable {
 
     @SerializedName("createdBy")
     @Expose
+    @Ignore
     private Object createdBy;
 
     @SerializedName("deleteTs")
     @Expose
+    @Ignore
     private Object deleteTs;
 
     @SerializedName("deletedBy")
     @Expose
+    @Ignore
     private Object deletedBy;
 
     @SerializedName("email")
     @Expose
+    @Ignore
     private Object email;
 
     @SerializedName("firstName")
     @Expose
+    @Ignore
     private Object firstName;
 
     @SerializedName("ipMask")
     @Expose
+    @Ignore
     private Object ipMask;
 
     @SerializedName("language")
     @Expose
+    @Ignore
     private Object language;
 
     @SerializedName("lastName")
     @Expose
+    @Ignore
     private Object lastName;
 
     @SerializedName("login")
@@ -74,6 +86,7 @@ public class User implements Serializable, Parcelable {
 
     @SerializedName("middleName")
     @Expose
+    @Ignore
     private Object middleName;
 
     @SerializedName("name")
@@ -82,26 +95,32 @@ public class User implements Serializable, Parcelable {
 
     @SerializedName("password")
     @Expose
+    @Ignore
     private Object password;
 
     @SerializedName("position")
     @Expose
+    @Ignore
     private Object position;
 
     @SerializedName("timeZone")
     @Expose
+    @Ignore
     private Object timeZone;
 
     @SerializedName("timeZoneAuto")
     @Expose
+    @Ignore
     private Object timeZoneAuto;
 
     @SerializedName("updateTs")
     @Expose
+    @Ignore
     private Object updateTs;
 
     @SerializedName("updatedBy")
     @Expose
+    @Ignore
     private Object updatedBy;
 
     @SerializedName("workHoursForWeek")

@@ -9,12 +9,15 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 
+import io.realm.RealmObject;
+import io.realm.annotations.Ignore;
+
 /**
  * Generate Plain Old Java Objects from JSON or JSON-Schema
  * www.jsonschema2pojo.org
  */
 
-public class TimeEntry implements Serializable, Parcelable {
+public class TimeEntry extends RealmObject implements Serializable, Parcelable {
 
     @SerializedName("id")
     @Expose
@@ -33,15 +36,19 @@ public class TimeEntry implements Serializable, Parcelable {
     private String date;
     @SerializedName("deleteTs")
     @Expose
+    @Ignore
     private Object deleteTs;
     @SerializedName("deletedBy")
     @Expose
+    @Ignore
     private Object deletedBy;
     @SerializedName("description")
     @Expose
+    @Ignore
     private Object description;
     @SerializedName("rejectionReason")
     @Expose
+    @Ignore
     private Object rejectionReason;
     @SerializedName("status")
     @Expose
@@ -61,6 +68,7 @@ public class TimeEntry implements Serializable, Parcelable {
 
     @SerializedName("updatedBy")
     @Expose
+    @Ignore
     private Object updatedBy;
 
     public final static Parcelable.Creator<TimeEntry> CREATOR = new Creator<TimeEntry>() {

@@ -32,6 +32,15 @@ allprojects {
     }
 }
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "io.realm:realm-gradle-plugin:3.4.0"
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

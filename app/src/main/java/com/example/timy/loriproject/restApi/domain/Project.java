@@ -8,12 +8,15 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 
+import io.realm.RealmObject;
+import io.realm.annotations.Ignore;
+
 /**
  * Generate Plain Old Java Objects from JSON or JSON-Schema
  * www.jsonschema2pojo.org
  */
 
-public class Project implements Serializable, Parcelable {
+public class Project extends RealmObject implements Serializable, Parcelable {
 
     @SerializedName("id")
     @Expose
@@ -29,12 +32,15 @@ public class Project implements Serializable, Parcelable {
     private String createdBy;
     @SerializedName("deleteTs")
     @Expose
+    @Ignore
     private Object deleteTs;
     @SerializedName("deletedBy")
     @Expose
+    @Ignore
     private Object deletedBy;
     @SerializedName("description")
     @Expose
+    @Ignore
     private Object description;
     @SerializedName("name")
     @Expose
@@ -44,12 +50,14 @@ public class Project implements Serializable, Parcelable {
     private String status;
     @SerializedName("timeEntryNamePattern")
     @Expose
+    @Ignore
     private Object timeEntryNamePattern;
     @SerializedName("updateTs")
     @Expose
     private String updateTs;
     @SerializedName("updatedBy")
     @Expose
+    @Ignore
     private Object updatedBy;
     public final static Parcelable.Creator<Project> CREATOR = new Creator<Project>() {
 

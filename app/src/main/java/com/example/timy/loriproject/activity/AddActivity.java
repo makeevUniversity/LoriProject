@@ -2,6 +2,7 @@ package com.example.timy.loriproject.activity;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -126,11 +127,19 @@ public class AddActivity extends AppCompatActivity {
                                 spinnerTask.setSelection(0);
 
                                 spinnerTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                    @SuppressLint("NewApi")
                                     @Override
                                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                                         String taskName = (String) spinnerTask.getSelectedItem();
-                                        taskId = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get().getId();
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                            taskId = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get().getId();
+                                        }else {
+                                            for (Task vo:tasks) {
+                                                if(vo.getName().equals(taskName)){
+                                                    taskId=vo.getId();
+                                                    break;
+                                                }
+                                            }
+                                        }
                                     }
 
                                     @Override

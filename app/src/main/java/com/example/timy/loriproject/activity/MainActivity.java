@@ -30,12 +30,14 @@ import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.realm.Realm;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private static SimpleDateFormat sdf;
     private List<TimeEntry> list;
     private static Calendar calendarSelected;
+    private Realm realm;
 
 
     @BindView(R.id.toolbar)
@@ -75,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         swipeRefreshLayout.setOnRefreshListener(this);
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+//        realm = Realm.getInstance(this);
 
         eventList.setLayoutManager(new LinearLayoutManager(this));
         list = new ArrayList<>();
@@ -128,6 +133,17 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     //TODO: зарефакторить
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+
+        if (id == R.id.get_in_realm) {
+            list.clear();
+
+//            list.addAll(realm.(TimeEntry.class));
+
+            adapterListEvent.notifyDataSetChanged();
+            eventList.invalidate();
+
+            return true;
+        }
 
         if (id == R.id.action_calendar) {
             if (calendarSelected == null) {
@@ -252,12 +268,19 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         List<TimeEntry> timeEntries = response.body();
 
                         if (timeEntries != null) {
+
+                            realm.beginTransaction();
+                            for (TimeEntry vo : timeEntries) {
+                                realm.copyToRealm(vo);
+                            }
+                            realm.commitTransaction();
+
+                            list.clear();
+                            list.addAll(timeEntries);
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                list.clear();
-
-                                list.addAll(timeEntries);
-
                                 list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
+                            }else {
+                                Collections.sort(list, (o1, o2) -> o1.toString().compareTo(o2.toString()));
                             }
                             adapterListEvent.notifyDataSetChanged();
                             eventList.invalidate();
@@ -277,7 +300,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     public static class WeekPickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
 
         @Override
-        //TODO: Зарефакторить
         public void onDateSet(DatePickerDialog view, int year, int monthOfYear, int dayOfMonth) {
             Calendar calendar = Calendar.getInstance();
             calendar.set(year, monthOfYear, dayOfMonth);
@@ -292,5 +314,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             calendarSelected.set(year, monthOfYear, dayOfMonth);
 
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        realm.close();
     }
 }

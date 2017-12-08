@@ -4,6 +4,13 @@
     tools:context="com.example.timy.loriproject.activity.MainActivity">
 
     <item
+        android:id="@+id/get_in_realm"
+        android:icon="@android:drawable/arrow_down_float"
+        android:title="@string/get_in_realm"
+        app:showAsAction="ifRoom" />
+
+
+    <item
         android:id="@+id/action_calendar"
         android:icon="@drawable/ic_event_black_24dp"
         android:title="@string/menu_change_week"

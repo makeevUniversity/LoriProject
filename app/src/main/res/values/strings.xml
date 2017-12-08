@@ -17,4 +17,5 @@
     <string name="spinner_project">Выберите проект</string>
     <string name="spinner_task">Выберите задачу</string>
     <string name="update_text_button">Обновить</string>
+    <string name="get_in_realm">Загрузить из бд</string>
 </resources>
