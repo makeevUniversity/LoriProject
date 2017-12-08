@@ -25,10 +25,8 @@ public class LoriApiClass extends Application {
         String port = sp.getString("port", "8080");
 
         if(!host.isEmpty() && !port.isEmpty()) {
-//            OkHttpClient client=new OkHttpClient();
-
             retrofit = new Retrofit.Builder()
-                    .baseUrl("http://" + host + ":" + port)
+                    .baseUrl("http://" + host + ":" + port+"/")
                     .addConverterFactory(ScalarsConverterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();

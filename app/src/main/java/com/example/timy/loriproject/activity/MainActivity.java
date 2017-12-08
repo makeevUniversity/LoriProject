@@ -1,14 +1,12 @@
 package com.example.timy.loriproject.activity;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
@@ -19,14 +17,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.adapters.AdapterListEvent;
 import com.example.timy.loriproject.restApi.LoriApiClass;
-import com.example.timy.loriproject.restApi.QueriesAndTypes;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
@@ -34,19 +31,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import butterknife.OnLongClick;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
-import static com.example.timy.loriproject.restApi.QueriesAndTypes.QUERY_PATH;
-import static com.example.timy.loriproject.restApi.QueriesAndTypes.STATIC_PATH;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -70,17 +62,24 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @BindView(R.id.swipeRefresh)
     SwipeRefreshLayout swipeRefreshLayout;
 
+    @SuppressLint("SimpleDateFormat")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         ButterKnife.bind(this);
+
         setSupportActionBar(toolbar);
+
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
         eventList.setLayoutManager(new LinearLayoutManager(this));
         list = new ArrayList<>();
-        adapterListEvent = new AdapterListEvent(list);
+        adapterListEvent = new AdapterListEvent(list, sharedPreferences);
         eventList.setAdapter(adapterListEvent);
-
         RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
         eventList.setItemAnimator(itemAnimator);
 
@@ -99,10 +98,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                                 .setAction("Action", null).show();
                     }
                 }));
-        swipeRefreshLayout.setOnRefreshListener(this);
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        sdf=new SimpleDateFormat("yyyy-MM-dd");
+        sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         singIn();
 
@@ -140,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     calendarSelected.get(Calendar.DAY_OF_MONTH));
             dpd.setVersion(DatePickerDialog.Version.VERSION_2);
             dpd.show(getFragmentManager(), "Выберите дату");
+            swipeRefreshLayout.setRefreshing(true);
             dpd.setOnDismissListener(dialogInterface -> onRefresh());
             return true;
         }
@@ -237,15 +235,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         if (user != null && from != null && to != null) {
 
             LoriApiClass.getApi().getTimeEntries(
-                    QueriesAndTypes.TYPE_TIME_ENTRIES,
-                    QueriesAndTypes.QUERY_GET_TIME_ENTRIES,
                     tokken,
                     user,
                     from,
                     to
             ).enqueue(new Callback<List<TimeEntry>>() {
 
-                @RequiresApi(api = Build.VERSION_CODES.N)
                 @Override
                 public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
                     int code = response.code();
@@ -253,9 +248,17 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     Log.d("error", String.valueOf(response.body()));
 
                     if (code == 200) {
-                        list = response.body();
-                        if (list != null) {
-                            list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
+
+                        List<TimeEntry> timeEntries = response.body();
+
+                        if (timeEntries != null) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                list.clear();
+
+                                list.addAll(timeEntries);
+
+                                list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
+                            }
                             adapterListEvent.notifyDataSetChanged();
                             eventList.invalidate();
                         }
@@ -264,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                 @Override
                 public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
-                    Log.d("error",t.getMessage());
+                    Log.d("error", t.getMessage());
                 }
             });
         }
@@ -279,18 +282,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             Calendar calendar = Calendar.getInstance();
             calendar.set(year, monthOfYear, dayOfMonth);
 
-            while (calendar.get(Calendar.DAY_OF_WEEK) != calendar.getFirstDayOfWeek()) {
-                calendar.add(Calendar.DATE, -1);
-            }
-
             sharedPreferences.edit().putString("from", sdf.format(calendar.getTime())).apply();
 
-            calendar.add(Calendar.DATE, 6);
+            calendar.add(Calendar.DATE, 1);
 
             sharedPreferences.edit().putString("to", sdf.format(calendar.getTime())).apply();
 
-//            calendarSelected = Calendar.getInstance();
-//            calendarSelected.set(year, monthOfYear, dayOfMonth);
+            calendarSelected = Calendar.getInstance();
+            calendarSelected.set(year, monthOfYear, dayOfMonth);
 
         }
     }

@@ -1,7 +1,6 @@
 package com.example.timy.loriproject.activity;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -20,8 +19,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.example.timy.loriproject.R;
+import com.example.timy.loriproject.restApi.JsonHelper;
 import com.example.timy.loriproject.restApi.LoriApiClass;
-import com.example.timy.loriproject.restApi.QueriesAndTypes;
 import com.example.timy.loriproject.restApi.domain.Task;
 import com.example.timy.loriproject.restApi.domain.User;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
@@ -32,7 +31,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -74,11 +72,11 @@ public class AddActivity extends AppCompatActivity {
 
 
     private SharedPreferences sp;
-    private String userId;
     public static Calendar date;
     private static String time;
     private String taskId;
     private String strDate;
+    private JsonHelper jsonHelper;
 
 
     @Override
@@ -95,13 +93,14 @@ public class AddActivity extends AppCompatActivity {
 
             toolbar.setNavigationOnClickListener(v -> onBackPressed());
         }
+
+        jsonHelper=new JsonHelper();
+
         getUserId();
 
         String tokken = sp.getString("tokken", null);
 
-        LoriApiClass.getApi().getTasks(QueriesAndTypes.TYPE_TASK,
-                QueriesAndTypes.QUERY_GET_TASKS,
-                tokken).
+        LoriApiClass.getApi().getTasks(tokken).
                 enqueue(new Callback<List<Task>>() {
                     @Override
                     public void onResponse(@NonNull Call<List<Task>> call, @NonNull Response<List<Task>> response) {
@@ -131,7 +130,7 @@ public class AddActivity extends AppCompatActivity {
                                     @Override
                                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                                         String taskName = (String) spinnerTask.getSelectedItem();
-                                        taskId = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get().getName();
+                                        taskId = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get().getId();
                                     }
 
                                     @Override
@@ -166,41 +165,17 @@ public class AddActivity extends AppCompatActivity {
     @OnClick(R.id.fab_add_entry_time)
     void save() {
         String tokken = sp.getString("tokken", null);
-        String splitter = Pattern.quote(":");
-        String[] hoursAndMinutes = time.split(splitter);
+        String userId = sp.getString("userId", null);
+
+        String[] hoursAndMinutes = time.split(":");
         int hours = Integer.parseInt(hoursAndMinutes[0]);
         int minutes = Integer.parseInt(hoursAndMinutes[1]);
         int timeInMinutes = hours * 60 + minutes;
-        DecimalFormat df = new DecimalFormat("####0.00");
-        String timeInHours = df.format(timeInMinutes / 60);
+        String timeInHours = String.valueOf(timeInMinutes/60);
 
-        JSONObject object = new JSONObject();
-        JSONArray commit = new JSONArray();
-        JSONObject timeEntry = new JSONObject();
+        String body=jsonHelper.getJsonTimeEntryAdd(strDate,taskId,userId,timeInHours, String.valueOf(timeInMinutes)).toString();
 
-        try {
-            timeEntry.put("id", "NEW-ts$TimeEntry");
-            timeEntry.put("date", strDate);
-            timeEntry.put("status", "new");
-
-            JSONObject task = new JSONObject();
-            task.put("id", taskId);
-            timeEntry.put("task", task);
-
-            JSONObject user = new JSONObject();
-            user.put("id", userId);
-            timeEntry.put("user", user);
-
-            timeEntry.put("timeInHours", timeInHours);
-            timeEntry.put("timeInMinutes", String.valueOf(timeInMinutes));
-
-            commit.put(timeEntry);
-            object.put("commitInstances", commit);
-        } catch (JSONException e) {
-            Log.d("error", e.getMessage());
-        }
-
-        LoriApiClass.getApi().commit(tokken, object.toString()).enqueue(new Callback<String>() {
+        LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
 
@@ -244,10 +219,7 @@ public class AddActivity extends AppCompatActivity {
         String tokken = sp.getString("tokken", null);
 
         if (login != null && tokken != null) {
-            LoriApiClass.getApi().getUserEntity(QueriesAndTypes.TYPE_USER,
-                    QueriesAndTypes.QUERY_GET_USER,
-                    tokken,
-                    login).enqueue(new Callback<List<User>>() {
+            LoriApiClass.getApi().getUserEntity(tokken, login).enqueue(new Callback<List<User>>() {
                 @Override
                 public void onResponse(@NonNull Call<List<User>> call, @NonNull Response<List<User>> response) {
                     int code = response.code();
@@ -256,7 +228,7 @@ public class AddActivity extends AppCompatActivity {
                     Log.d("error", String.valueOf(response.body()));
 
                     if (code == 200 && response.body() != null) {
-                        userId = response.body().get(0).getId();
+                        sp.edit().putString("userId", response.body().get(0).getId()).apply();
                     }
                 }
 

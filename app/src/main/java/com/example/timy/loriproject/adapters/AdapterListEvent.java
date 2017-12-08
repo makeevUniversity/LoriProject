@@ -1,7 +1,10 @@
 package com.example.timy.loriproject.adapters;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -12,12 +15,19 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 
 import com.example.timy.loriproject.R;
+import com.example.timy.loriproject.restApi.JsonHelper;
 import com.example.timy.loriproject.restApi.LoriApiClass;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
+import com.google.gson.JsonObject;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -30,10 +40,14 @@ import retrofit2.Response;
 
 public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.EventListAdapter> {
 
-    List<TimeEntry> timeEntries;
+    private List<TimeEntry> timeEntries;
+    private static SharedPreferences sharedPreferences;
+    private JsonHelper jsonHelper;
 
-    public AdapterListEvent(List<TimeEntry> timeEntries) {
+    public AdapterListEvent(List<TimeEntry> timeEntries, SharedPreferences sharedPreferences) {
         this.timeEntries = timeEntries;
+        AdapterListEvent.sharedPreferences = sharedPreferences;
+        this.jsonHelper = new JsonHelper();
     }
 
     @Override
@@ -55,10 +69,14 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         holder.date.setText("Дата: " + vo.getDate());
         holder.taskName.setText("Задача: " + vo.getTaskName());
         holder.projectName.setText("Проект: " + vo.getTask().getName());
-        holder.time.setText(vo.getTimeInMinutes());
+        holder.time.setText("Минут затраченно: " + vo.getTimeInMinutes());
 
-        //TODO: допилить
-        holder.removeBtn.setOnClickListener(v -> LoriApiClass.getApi().commit("", "").enqueue(new Callback<String>() {
+
+        String tokken = sharedPreferences.getString("tokken", null);
+        String body = jsonHelper.getJsonTimeEntryDelete(timeEntries.get(position)).toString();
+
+        holder.removeBtn.setOnClickListener(v -> LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
+
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 timeEntries.remove(position);
@@ -78,7 +96,6 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         return timeEntries.size();
     }
 
-
     public static class EventListAdapter extends RecyclerView.ViewHolder {
 
         @BindView(R.id.cardView)
@@ -97,12 +114,11 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         TextView time;
 
         @BindView(R.id.time_entry_remove_button)
-        Button removeBtn;
+        ImageButton removeBtn;
 
 
         public EventListAdapter(View itemView) {
             super(itemView);
-
             ButterKnife.bind(this, itemView);
         }
     }

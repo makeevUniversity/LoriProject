@@ -16,4 +16,5 @@
     <string name="text_date">дата</string>
     <string name="spinner_project">Выберите проект</string>
     <string name="spinner_task">Выберите задачу</string>
+    <string name="update_text_button">Обновить</string>
 </resources>
