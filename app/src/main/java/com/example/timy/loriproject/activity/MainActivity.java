@@ -79,7 +79,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-//        realm = Realm.getInstance(this);
+        Realm.init(this);
+        realm = Realm.getDefaultInstance();
 
         eventList.setLayoutManager(new LinearLayoutManager(this));
         list = new ArrayList<>();
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         if (id == R.id.get_in_realm) {
             list.clear();
 
-//            list.addAll(realm.(TimeEntry.class));
+            list.addAll(realm.where(TimeEntry.class).findAll());
 
             adapterListEvent.notifyDataSetChanged();
             eventList.invalidate();
@@ -269,18 +270,19 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                         if (timeEntries != null) {
 
-//                            realm.beginTransaction();
-//                            for (TimeEntry vo : timeEntries) {
+                            realm.beginTransaction();
+                            for (TimeEntry vo : timeEntries) {
+                                realm.copyToRealmOrUpdate(vo);
 //                                realm.copyToRealm(vo);
-//                            }
-//                            realm.commitTransaction();
+                            }
+                            realm.commitTransaction();
 
                             list.clear();
                             list.addAll(timeEntries);
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                                 list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
-                            }else {
-                                Collections.sort(list, (o1, o2) -> Integer.compare(o1.describeContents(),o2.describeContents()));
+                            } else {
+                                Collections.sort(list, (o1, o2) -> Integer.compare(o1.describeContents(), o2.describeContents()));
                             }
                             adapterListEvent.notifyDataSetChanged();
                             eventList.invalidate();
@@ -306,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
             sharedPreferences.edit().putString("from", sdf.format(calendar.getTime())).apply();
 
-            calendar.add(Calendar.DATE, 1);
+            //calendar.add(Calendar.DATE, 1);
 
             sharedPreferences.edit().putString("to", sdf.format(calendar.getTime())).apply();
 

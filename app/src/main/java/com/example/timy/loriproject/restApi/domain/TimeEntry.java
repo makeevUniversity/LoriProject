@@ -11,6 +11,7 @@ import java.io.Serializable;
 
 import io.realm.RealmObject;
 import io.realm.annotations.Ignore;
+import io.realm.annotations.PrimaryKey;
 
 /**
  * Generate Plain Old Java Objects from JSON or JSON-Schema
@@ -21,6 +22,7 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
 
     @SerializedName("id")
     @Expose
+    @PrimaryKey
     private String id;
     @SerializedName("task")
     @Expose
