@@ -2,6 +2,7 @@ package com.example.timy.loriproject.activity;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -27,16 +28,10 @@ import com.example.timy.loriproject.restApi.domain.User;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -120,10 +115,10 @@ public class AddActivity extends AppCompatActivity {
                                     projectsName.add(vo.getProject().getName());
                                     tasksName.add(vo.getName());
                                 }
-                                spinnerProject.setAdapter(new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_item, projectsName));
+                                spinnerProject.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, projectsName));
                                 spinnerProject.setSelection(0);
 
-                                spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_item, tasksName));
+                                spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, tasksName));
                                 spinnerTask.setSelection(0);
 
                                 spinnerTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
