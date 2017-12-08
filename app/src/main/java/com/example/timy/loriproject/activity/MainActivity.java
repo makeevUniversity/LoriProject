@@ -269,18 +269,18 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                         if (timeEntries != null) {
 
-                            realm.beginTransaction();
-                            for (TimeEntry vo : timeEntries) {
-                                realm.copyToRealm(vo);
-                            }
-                            realm.commitTransaction();
+//                            realm.beginTransaction();
+//                            for (TimeEntry vo : timeEntries) {
+//                                realm.copyToRealm(vo);
+//                            }
+//                            realm.commitTransaction();
 
                             list.clear();
                             list.addAll(timeEntries);
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                                 list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
                             }else {
-                                Collections.sort(list, (o1, o2) -> o1.toString().compareTo(o2.toString()));
+                                Collections.sort(list, (o1, o2) -> Integer.compare(o1.describeContents(),o2.describeContents()));
                             }
                             adapterListEvent.notifyDataSetChanged();
                             eventList.invalidate();
