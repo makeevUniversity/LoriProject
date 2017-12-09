@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         eventList.setLayoutManager(new LinearLayoutManager(this));
         list = new ArrayList<>();
-        adapterListEvent = new AdapterListEvent(list, sharedPreferences);
+        adapterListEvent = new AdapterListEvent(list, sharedPreferences, this);
         eventList.setAdapter(adapterListEvent);
         RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
         eventList.setItemAnimator(itemAnimator);
@@ -131,20 +131,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     @Override
-    //TODO: зарефакторить
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
-        if (id == R.id.get_in_realm) {
-            list.clear();
-
-            list.addAll(realm.where(TimeEntry.class).findAll());
-
-            adapterListEvent.notifyDataSetChanged();
-            eventList.invalidate();
-
-            return true;
-        }
 
         if (id == R.id.action_calendar) {
             if (calendarSelected == null) {
@@ -261,8 +249,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
                     int code = response.code();
-                    Log.d("error", String.valueOf(response.code()));
-                    Log.d("error", String.valueOf(response.body()));
 
                     if (code == 200) {
 
@@ -273,7 +259,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                             realm.beginTransaction();
                             for (TimeEntry vo : timeEntries) {
                                 realm.copyToRealmOrUpdate(vo);
-//                                realm.copyToRealm(vo);
                             }
                             realm.commitTransaction();
 

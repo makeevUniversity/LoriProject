@@ -18,4 +18,6 @@
     <string name="spinner_task">Выберите задачу</string>
     <string name="update_text_button">Обновить</string>
     <string name="get_in_realm">Загрузить из бд</string>
+    <string name="descriptionText">описание:</string>
+    <string name="text_update">Обновить</string>
 </resources>

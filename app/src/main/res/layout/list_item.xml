@@ -54,6 +54,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingLeft="10dp"
+                    android:paddingTop="10dp"/>
+
+                <TextView
+                    android:id="@+id/time_entry_descr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="10dp"
                     android:paddingTop="10dp"
                     android:paddingBottom="10dp"/>
 
@@ -78,7 +85,7 @@
                         android:id="@+id/time_entry_update_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingTop="50dp"
+                        android:paddingTop="70dp"
                         android:background="@color/mdtp_white"
                         app:srcCompat="@android:drawable/ic_menu_edit" />
 

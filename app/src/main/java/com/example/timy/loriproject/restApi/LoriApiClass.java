@@ -1,6 +1,7 @@
 package com.example.timy.loriproject.restApi;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -13,7 +14,7 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 public class LoriApiClass extends Application {
 
     private static LoriRestApi loriRestApi;
-    private Retrofit retrofit;
+    private static Retrofit retrofit;
 
     @Override
     public void onCreate() {
@@ -21,8 +22,25 @@ public class LoriApiClass extends Application {
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 
-        String host = sp.getString("host", "localhost");
-        String port = sp.getString("port", "8080");
+        String host = sp.getString("host", "");
+        String port = sp.getString("port", "");
+
+        if(!host.isEmpty() && !port.isEmpty()) {
+            retrofit = new Retrofit.Builder()
+                    .baseUrl("http://" + host + ":" + port+"/")
+                    .addConverterFactory(ScalarsConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            loriRestApi = retrofit.create(LoriRestApi.class);
+        }
+    }
+
+    public static void rebuildRetrofit(Context context){
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String host = sp.getString("host", "");
+        String port = sp.getString("port", "");
 
         if(!host.isEmpty() && !port.isEmpty()) {
             retrofit = new Retrofit.Builder()

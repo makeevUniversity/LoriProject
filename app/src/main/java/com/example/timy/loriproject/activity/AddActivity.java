@@ -24,6 +24,7 @@ import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.restApi.JsonHelper;
 import com.example.timy.loriproject.restApi.LoriApiClass;
 import com.example.timy.loriproject.restApi.domain.Task;
+import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.example.timy.loriproject.restApi.domain.User;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
@@ -66,6 +67,9 @@ public class AddActivity extends AppCompatActivity {
     @BindView(R.id.fab_add_entry_time)
     FloatingActionButton saveButton;
 
+    @BindView(R.id.text_description)
+    TextView description;
+
 
     private SharedPreferences sp;
     public static Calendar date;
@@ -73,6 +77,8 @@ public class AddActivity extends AppCompatActivity {
     private String taskId;
     private String strDate;
     private JsonHelper jsonHelper;
+    private boolean update;
+    private String id;
 
 
     @Override
@@ -90,84 +96,31 @@ public class AddActivity extends AppCompatActivity {
             toolbar.setNavigationOnClickListener(v -> onBackPressed());
         }
 
-        jsonHelper=new JsonHelper();
-
-        getUserId();
-
+        jsonHelper = new JsonHelper();
+        update = false;
         String tokken = sp.getString("tokken", null);
 
-        LoriApiClass.getApi().getTasks(tokken).
-                enqueue(new Callback<List<Task>>() {
-                    @Override
-                    public void onResponse(@NonNull Call<List<Task>> call, @NonNull Response<List<Task>> response) {
+        Bundle bundle = getIntent().getExtras();
 
-                        Log.d("error", String.valueOf(response.code()));
-                        Log.d("error", String.valueOf(response.body()));
+        //TODO!!!
+        if (bundle != null) {
+            update = true;
 
-                        if (response.body() != null) {
-                            List<Task> tasks = response.body();
+            TimeEntry timeEntry= (TimeEntry) bundle.getSerializable("timeEntry");
 
-                            List<String> projectsName = new ArrayList<>();
-                            List<String> tasksName = new ArrayList<>();
+            if (timeEntry != null) {
+                description.setText(timeEntry.getDescription());
+                id=timeEntry.getId();
+            }
+        }
 
-                            if (tasks != null) {
-                                for (Task vo : tasks) {
-                                    projectsName.add(vo.getProject().getName());
-                                    tasksName.add(vo.getName());
-                                }
-                                spinnerProject.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, projectsName));
-                                spinnerProject.setSelection(0);
+        getUserId();
+        updateSpinners(tokken);
 
-                                spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, tasksName));
-                                spinnerTask.setSelection(0);
-
-                                spinnerTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                    @Override
-                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                                        String taskName = (String) spinnerTask.getSelectedItem();
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                            taskId = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get().getId();
-                                        }else {
-                                            for (Task vo:tasks) {
-                                                if(vo.getName().equals(taskName)){
-                                                    taskId=vo.getId();
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onNothingSelected(AdapterView<?> parent) {
-
-                                    }
-                                });
-
-//                                spinnerProject.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//                                    @Override
-//                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//
-//                                    }
-//
-//                                    @Override
-//                                    public void onNothingSelected(AdapterView<?> parent) {
-//
-//                                    }
-//                                });
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<List<Task>> call, @NonNull Throwable t) {
-
-                    }
-                });
     }
 
-    @SuppressLint("SimpleDateFormat")
     @OnClick(R.id.fab_add_entry_time)
-    void save() {
+    void saveOrUpdate() {
         String tokken = sp.getString("tokken", null);
         String userId = sp.getString("userId", null);
 
@@ -175,23 +128,14 @@ public class AddActivity extends AppCompatActivity {
         int hours = Integer.parseInt(hoursAndMinutes[0]);
         int minutes = Integer.parseInt(hoursAndMinutes[1]);
         int timeInMinutes = hours * 60 + minutes;
-        String timeInHours = String.valueOf(timeInMinutes/60);
+        String timeInHours = String.valueOf(timeInMinutes / 60);
+        String descr = description.getText().toString();
 
-        String body=jsonHelper.getJsonTimeEntryAdd(strDate,taskId,userId,timeInHours, String.valueOf(timeInMinutes)).toString();
-
-        LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
-            @Override
-            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-
-                onBackPressed();
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
-                Snackbar.make(saveButton, "Не удалось сохранить!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        if (update) {
+            update(tokken, userId, id, strDate, taskId, timeInHours, String.valueOf(timeInMinutes), descr);
+        } else {
+            save(tokken, userId, timeInHours, String.valueOf(timeInMinutes), descr);
+        }
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -242,6 +186,113 @@ public class AddActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+
+    private void update(String tokken, String userId, String id, String date, String idTask, String hours, String minutes, String description) {
+        String body = jsonHelper.getJsonTimeEntryUpdate(id, date, idTask, userId, hours, minutes, "меня проапдейтили").toString();
+        LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+
+                Snackbar.make(saveButton, "готово!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+
+                onBackPressed();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                Snackbar.make(saveButton, "Нет связи с сервером!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+    }
+
+    private void save(String tokken, String userId, String timeInHours, String timeInMinutes, String descr) {
+
+
+        String body = jsonHelper.getJsonTimeEntryAdd(strDate, taskId, userId, timeInHours, timeInMinutes, descr).toString();
+
+        LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                onBackPressed();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                Snackbar.make(saveButton, "Не удалось сохранить!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+
+    }
+
+    private void updateSpinners(String tokken) {
+        LoriApiClass.getApi().getTasks(tokken).
+                enqueue(new Callback<List<Task>>() {
+                    @Override
+                    public void onResponse(@NonNull Call<List<Task>> call, @NonNull Response<List<Task>> response) {
+                        if (response.body() != null) {
+                            List<Task> tasks = response.body();
+
+                            List<String> projectsName = new ArrayList<>();
+                            List<String> tasksName = new ArrayList<>();
+
+                            if (tasks != null) {
+                                for (Task vo : tasks) {
+                                    projectsName.add(vo.getProject().getName());
+                                    tasksName.add(vo.getName());
+                                }
+                                spinnerProject.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, projectsName));
+                                spinnerProject.setSelection(0);
+
+                                spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, tasksName));
+                                spinnerTask.setSelection(0);
+
+                                spinnerTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                    @Override
+                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                        String taskName = (String) spinnerTask.getSelectedItem();
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                            taskId = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get().getId();
+                                        } else {
+                                            for (Task vo : tasks) {
+                                                if (vo.getName().equals(taskName)) {
+                                                    taskId = vo.getId();
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onNothingSelected(AdapterView<?> parent) {
+
+                                    }
+                                });
+
+//                                spinnerProject.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                                    @Override
+//                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//
+//                                    }
+//
+//                                    @Override
+//                                    public void onNothingSelected(AdapterView<?> parent) {
+//
+//                                    }
+//                                });
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<List<Task>> call, @NonNull Throwable t) {
+
+                    }
+                });
     }
 
     public static class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {

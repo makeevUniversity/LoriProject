@@ -94,6 +94,9 @@ public class SettingsActivity extends AppCompatActivity {
         String host = sp.getString("host", "");
 
         if (!login.isEmpty() && !pass.isEmpty() && !port.isEmpty() && !host.isEmpty()) {
+            
+            LoriApiClass.rebuildRetrofit(this);
+
             LoriApiClass.getApi().login(login, pass).enqueue(new Callback<String>() {
                 @Override
                 public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {

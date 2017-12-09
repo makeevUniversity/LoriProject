@@ -46,8 +46,7 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
     private Object deletedBy;
     @SerializedName("description")
     @Expose
-    @Ignore
-    private Object description;
+    private String description;
     @SerializedName("rejectionReason")
     @Expose
     @Ignore
@@ -87,7 +86,7 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
             instance.date = ((String) in.readValue((String.class.getClassLoader())));
             instance.deleteTs = ((Object) in.readValue((Object.class.getClassLoader())));
             instance.deletedBy = ((Object) in.readValue((Object.class.getClassLoader())));
-            instance.description = ((Object) in.readValue((Object.class.getClassLoader())));
+            instance.description = ((String) in.readValue((Object.class.getClassLoader())));
             instance.rejectionReason = ((Object) in.readValue((Object.class.getClassLoader())));
             instance.status = ((String) in.readValue((String.class.getClassLoader())));
             instance.taskName = ((String) in.readValue((String.class.getClassLoader())));
@@ -153,11 +152,11 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
         this.deletedBy = deletedBy;
     }
 
-    public Object getDescription() {
+    public String getDescription() {
         return description;
     }
 
-    public void setDescription(Object description) {
+    public void setDescription(String description) {
         this.description = description;
     }
 
