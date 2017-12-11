@@ -104,13 +104,13 @@ public class AddActivity extends AppCompatActivity {
 
         //TODO!!!
         if (bundle != null) {
-            update = true;
-
-            TimeEntry timeEntry= (TimeEntry) bundle.getSerializable("timeEntry");
-
+            TimeEntry timeEntry = (TimeEntry) bundle.getSerializable("timeEntry");
             if (timeEntry != null) {
+                update = true;
                 description.setText(timeEntry.getDescription());
-                id=timeEntry.getId();
+                id = timeEntry.getId();
+                textDate.setText(timeEntry.getDate());
+                textTime.setText(timeEntry.getTimeInMinutes());
             }
         }
 
@@ -242,9 +242,12 @@ public class AddActivity extends AppCompatActivity {
 
                             if (tasks != null) {
                                 for (Task vo : tasks) {
-                                    projectsName.add(vo.getProject().getName());
+                                    if (!projectsName.contains(vo.getProject().getName())) {
+                                        projectsName.add(vo.getProject().getName());
+                                    }
                                     tasksName.add(vo.getName());
                                 }
+
                                 spinnerProject.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, projectsName));
                                 spinnerProject.setSelection(0);
 
@@ -272,18 +275,6 @@ public class AddActivity extends AppCompatActivity {
 
                                     }
                                 });
-
-//                                spinnerProject.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//                                    @Override
-//                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//
-//                                    }
-//
-//                                    @Override
-//                                    public void onNothingSelected(AdapterView<?> parent) {
-//
-//                                    }
-//                                });
                             }
                         }
                     }

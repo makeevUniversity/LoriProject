@@ -108,14 +108,13 @@ public class SettingsActivity extends AppCompatActivity {
                         sp.edit().putString("tokken", tokken).apply();
                         finish();
                     } else {
-                        Snackbar.make(saveButton, "Сервер не отвечает :(", Snackbar.LENGTH_LONG)
+                        Snackbar.make(saveButton, code+" ошибка!", Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
-
                     Snackbar.make(saveButton, "Нет коннекта с сервером!", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }

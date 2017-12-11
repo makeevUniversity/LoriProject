@@ -74,10 +74,6 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
 
     public final static Parcelable.Creator<TimeEntry> CREATOR = new Creator<TimeEntry>() {
 
-
-        @SuppressWarnings({
-                "unchecked"
-        })
         public TimeEntry createFromParcel(Parcel in) {
             TimeEntry instance = new TimeEntry();
             instance.id = ((String) in.readValue((String.class.getClassLoader())));

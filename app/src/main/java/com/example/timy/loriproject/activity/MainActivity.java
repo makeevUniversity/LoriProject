@@ -202,8 +202,34 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         sharedPreferences.edit().putString("tokken", tokken).apply();
                         Snackbar.make(fab, "Коннект с сервером установлен!", Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
+
+
+                        LoriApiClass.getApi().getTags(tokken).enqueue(new Callback<List<Object>>() {
+                            @Override
+                            public void onResponse(@NonNull Call<List<Object>> call, @NonNull Response<List<Object>> response) {
+                                if(response.code()==200) {
+                                    if(response.body()!=null) {
+                                        Log.d("tagsBody", response.body().toString());
+                                    }
+                                    else {
+                                        Log.d("tags", null);
+                                    }
+                                }
+                                else {
+                                    Log.d("tags", String.valueOf(response.code()));
+                                    Log.d("tags",response.message());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Call<List<Object>> call, @NonNull Throwable t) {
+                                Log.d("tags", t.getMessage());
+                                Log.d("tags", t.getLocalizedMessage());
+                            }
+                        });
+
                     } else {
-                        Snackbar.make(fab, "Сервер не отвечает :(", Snackbar.LENGTH_LONG)
+                        Snackbar.make(fab, "ошибка : " + code, Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
                     }
                 }
@@ -272,16 +298,33 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                             adapterListEvent.notifyDataSetChanged();
                             eventList.invalidate();
                         }
+                    } else {
+                        list.clear();
+                        list.addAll(realm.where(TimeEntry.class).equalTo("date",from ).findAllAsync());
+                        adapterListEvent.notifyDataSetChanged();
+                        eventList.invalidate();
+
+                        Snackbar.make(fab, "ошибка : " + code, Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
                     }
+                    swipeRefreshLayout.setRefreshing(false);
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
+                    list.clear();
+                    list.addAll(realm.where(TimeEntry.class).equalTo("date",from ).findAllAsync());
+                    adapterListEvent.notifyDataSetChanged();
+                    eventList.invalidate();
+
                     Log.d("error", t.getMessage());
+
+                    Snackbar.make(fab, "Обновить данные не удалось: "+ t.getLocalizedMessage(), Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                    swipeRefreshLayout.setRefreshing(false);
                 }
             });
         }
-        swipeRefreshLayout.setRefreshing(false);
     }
 
     public static class WeekPickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
@@ -291,11 +334,15 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             Calendar calendar = Calendar.getInstance();
             calendar.set(year, monthOfYear, dayOfMonth);
 
-            sharedPreferences.edit().putString("from", sdf.format(calendar.getTime())).apply();
+            String formDate=sdf.format(calendar.getTime());
+
+            sharedPreferences.edit().putString("from", formDate).apply();
 
             //calendar.add(Calendar.DATE, 1);
 
-            sharedPreferences.edit().putString("to", sdf.format(calendar.getTime())).apply();
+            formDate=sdf.format(calendar.getTime());
+
+            sharedPreferences.edit().putString("to", formDate).apply();
 
             calendarSelected = Calendar.getInstance();
             calendarSelected.set(year, monthOfYear, dayOfMonth);

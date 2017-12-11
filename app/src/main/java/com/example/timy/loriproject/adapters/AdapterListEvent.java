@@ -75,7 +75,7 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
 
 
         String tokken = sharedPreferences.getString("tokken", null);
-        String userId=sharedPreferences.getString("userId",null);
+//        String userId=sharedPreferences.getString("userId",null);
         String body = jsonHelper.getJsonTimeEntryDelete(timeEntries.get(position)).toString();
 
         holder.removeBtn.setOnClickListener(v -> LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {

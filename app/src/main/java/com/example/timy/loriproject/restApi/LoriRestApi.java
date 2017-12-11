@@ -23,11 +23,15 @@ public interface LoriRestApi {
     String TYPE_TASK = "ts$Task";
     String TYPE_TIME_ENTRIES = "ts$TimeEntry";
 
+    //TODO
+    String TYPE_TAG = "ts$Tag";
+
     String QUERY_GET_TIME_ENTRIES = "select+a+from+ts$TimeEntry+a+where+a.createdBy=:name+and+a.date+between+:from+and+:to&view=timeEntry-browse";
     String QUERY_GET_USERS = "select+a+from+sec$User+a";
     String QUERY_GET_USER = "select+a+from+sec$User+a+where+a.login=:login";
     String QUERY_GET_PROJECTS = "select+a+from+ts$Project+a";
     String QUERY_GET_TASKS = "select+a+from+ts$Task+a&view=_minimal";
+    String QUERY_GET_TAGS = "select+a+from+ts$Tag+a";
 
 
     @GET(STATIC_PATH + "login")
@@ -41,6 +45,10 @@ public interface LoriRestApi {
     Call<List<User>> getUserEntity(
             @Query("s") String tokken,
             @Query("login") String login);
+
+    @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_TAG + "&q=" + QUERY_GET_TAGS)
+    //TODO
+    Call<List<Object>> getTags(@Query("s") String tokken);
 
 
     @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_TIME_ENTRIES + "&q=" + QUERY_GET_TIME_ENTRIES)
