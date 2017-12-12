@@ -73,25 +73,14 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         holder.projectName.setText("Проект: " + vo.getTask().getProject().getName());
 
         int val = Integer.parseInt(vo.getTimeInMinutes());
-//        long msc = val * 60000;
-//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
-//        String time = simpleDateFormat.format(msc);
-
         int hours = val / 60;
         int minutes = val % 60;
-
         String s = String.format("%02d:%02d", hours, minutes);
 
         holder.time.setText("Потраченно : " + s);
         holder.description.setText(vo.getDescription());
-//        if (vo.getActivityType() != null) {
-//            holder.activity.setText("Активность :" + vo.getActivityType().getName());
-//        }
-//        holder.tag.setText("#"+vo.getTag());
-
 
         String tokken = sharedPreferences.getString("tokken", null);
-//        String userId=sharedPreferences.getString("userId",null);
         String body = jsonHelper.getJsonTimeEntryDelete(timeEntries.get(position)).toString();
 
         holder.removeBtn.setOnClickListener(v -> LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
@@ -161,55 +150,6 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         public EventListAdapter(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
-        }
-    }
-
-    public interface ClickListener {
-        void onClick(View view, int position);
-
-        void onLongClick(View view, int position);
-    }
-
-    public static class AdapterClickListener implements RecyclerView.OnItemTouchListener {
-
-        private GestureDetector gestureDetector;
-        private AdapterListEvent.ClickListener clickListener;
-
-        public AdapterClickListener(Context context, final RecyclerView recyclerView, final ClickListener clickListener) {
-            this.clickListener = clickListener;
-            gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public boolean onSingleTapUp(MotionEvent e) {
-                    return true;
-                }
-
-                @Override
-                public void onLongPress(MotionEvent e) {
-                    View child = recyclerView.findChildViewUnder(e.getX(), e.getY());
-                    if (child != null && clickListener != null) {
-                        clickListener.onLongClick(child, recyclerView.getChildPosition(child));
-                    }
-                }
-            });
-        }
-
-        @Override
-        public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-            View child = rv.findChildViewUnder(e.getX(), e.getY());
-            if (child != null && clickListener != null && gestureDetector.onTouchEvent(e)) {
-                clickListener.onClick(child, rv.getChildPosition(child));
-            }
-            return false;
-        }
-
-        @Override
-        public void onTouchEvent(RecyclerView rv, MotionEvent e) {
-
-        }
-
-        @Override
-        public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-
         }
     }
 }

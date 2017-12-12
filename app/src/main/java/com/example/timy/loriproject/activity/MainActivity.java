@@ -19,7 +19,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -29,8 +28,6 @@ import com.example.timy.loriproject.restApi.LoriApiClass;
 import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
-
-import org.w3c.dom.Text;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -104,23 +101,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         eventList.setAdapter(adapterListEvent);
         RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
         eventList.setItemAnimator(itemAnimator);
-
-        eventList.addOnItemTouchListener(new AdapterListEvent.AdapterClickListener(getApplicationContext(),
-                eventList,
-                new AdapterListEvent.ClickListener() {
-                    @Override
-                    public void onClick(View view, int position) {
-                    }
-
-                    @Override
-                    public void onLongClick(View view, int position) {
-                    }
-                }));
-
         sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         singIn();
-
     }
 
     @OnClick(R.id.plus_day)
@@ -130,12 +112,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             String from = sharedPreferences.getString("from", null);
             if (from != null) {
                 try {
-                    Date date = sdf.parse(from);
-
-                    long time = date.getTime();
-
+                    long time = sdf.parse(from).getTime();
                     time += 86400000;
-
                     from = sdf.format(new Date(time));
 
                     toolbarDate.setText(from);
@@ -143,9 +121,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     sharedPreferences.edit().putString("to", from).apply();
 
                     swipeRefreshLayout.setRefreshing(true);
-
                     onRefresh();
-
                 } catch (ParseException e) {
                     Log.d("error", e.getMessage());
                 }
@@ -163,12 +139,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             String from = sharedPreferences.getString("from", null);
             if (from != null) {
                 try {
-                    Date date = sdf.parse(from);
-
-                    long time = date.getTime();
-
+                    long time = sdf.parse(from).getTime();
                     time -= 86400000;
-
                     from = sdf.format(new Date(time));
 
                     toolbarDate.setText(from);
@@ -176,9 +148,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     sharedPreferences.edit().putString("to", from).apply();
 
                     swipeRefreshLayout.setRefreshing(true);
-
                     onRefresh();
-
                 } catch (ParseException e) {
                     Log.d("error", e.getMessage());
                 }
@@ -212,6 +182,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
+        if(id==R.id.search_btn){
+            Intent intent = new Intent(this, SearchActivity.class);
+            startActivity(intent);
+            return true;
+        }
+
         if (id == R.id.action_calendar) {
             if (calendarSelected == null) {
                 calendarSelected = Calendar.getInstance();
@@ -221,7 +197,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             dpd.setVersion(DatePickerDialog.Version.VERSION_2);
             dpd.show(getFragmentManager(), "Выберите дату");
             swipeRefreshLayout.setRefreshing(true);
-            toolbarDate.setText(sharedPreferences.getString("from", "Выберите дату!"));
             dpd.setOnDismissListener(dialogInterface -> onRefresh());
             return true;
         }
@@ -363,14 +338,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                         if (timeEntries != null) {
 
-                            for (TimeEntry vo : timeEntries) {
-                                Log.d("TE:", vo.toString());
-                            }
-
                             realm.beginTransaction();
-                            for (TimeEntry vo : timeEntries) {
-                                realm.copyToRealmOrUpdate(vo);
-                            }
+                            realm.copyToRealmOrUpdate(timeEntries);
                             realm.commitTransaction();
 
                             list.clear();
@@ -410,6 +379,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 }
             });
         }
+        toolbarDate.setText(sharedPreferences.getString("from", "Выберите дату!"));
     }
 
     public static class WeekPickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {

@@ -23,8 +23,6 @@ public interface LoriRestApi {
     String TYPE_PROJECT = "ts$Project";
     String TYPE_TASK = "ts$Task";
     String TYPE_TIME_ENTRIES = "ts$TimeEntry";
-
-    //TODO
     String TYPE_TAG = "ts$Tag";
 
     String QUERY_GET_TIME_ENTRIES = "select+a+from+ts$TimeEntry+a+where+a.createdBy=:name+and+a.date+between+:from+and+:to&view=timeEntry-browse";

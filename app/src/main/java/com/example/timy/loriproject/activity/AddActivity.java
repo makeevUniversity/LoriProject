@@ -2,7 +2,6 @@ package com.example.timy.loriproject.activity;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -23,7 +22,6 @@ import android.widget.TextView;
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.restApi.JsonHelper;
 import com.example.timy.loriproject.restApi.LoriApiClass;
-import com.example.timy.loriproject.restApi.domain.Project;
 import com.example.timy.loriproject.restApi.domain.Task;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.example.timy.loriproject.restApi.domain.User;
@@ -33,7 +31,6 @@ import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +39,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.realm.Realm;
-import io.realm.RealmObject;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -113,7 +109,6 @@ public class AddActivity extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
 
-        //TODO!!!
         if (bundle != null) {
             TimeEntry timeEntry = (TimeEntry) bundle.getSerializable("timeEntry");
             if (timeEntry != null) {

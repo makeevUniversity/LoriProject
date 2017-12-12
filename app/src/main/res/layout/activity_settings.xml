@@ -54,6 +54,7 @@
         <Button
             android:id="@+id/buttonSave"
             android:layout_width="match_parent"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
             android:layout_height="wrap_content"
             android:text="@string/saveText" />
 

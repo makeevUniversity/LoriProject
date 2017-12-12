@@ -28,6 +28,7 @@
                     android:layout_width="wrap_content"
                     style="@style/Widget.AppCompat.Button.Borderless.Colored"
                     android:layout_height="wrap_content"
+                    android:textSize="20dp"
                     android:text="@string/plus_btn"
                     />
 
@@ -43,6 +44,7 @@
                     style="@style/Widget.AppCompat.Button.Borderless.Colored"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textSize="20dp"
                     android:text="@string/minus_btn"/>
 
             </LinearLayout>
