@@ -20,18 +20,25 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.adapters.AdapterListEvent;
 import com.example.timy.loriproject.restApi.LoriApiClass;
+import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
+import org.w3c.dom.Text;
+
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.BindView;
@@ -65,6 +72,15 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @BindView(R.id.swipeRefresh)
     SwipeRefreshLayout swipeRefreshLayout;
 
+    @BindView(R.id.toolbar_date)
+    TextView toolbarDate;
+
+    @BindView(R.id.plus_day)
+    Button plusDay;
+
+    @BindView(R.id.minus_day)
+    Button minusDay;
+
     @SuppressLint("SimpleDateFormat")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,14 +110,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 new AdapterListEvent.ClickListener() {
                     @Override
                     public void onClick(View view, int position) {
-                        Snackbar.make(fab, "Клик", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
                     }
 
                     @Override
                     public void onLongClick(View view, int position) {
-                        Snackbar.make(fab, "Долгий клик", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
                     }
                 }));
 
@@ -109,6 +121,72 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         singIn();
 
+    }
+
+    @OnClick(R.id.plus_day)
+    void plusDayClick() {
+        String tokken = sharedPreferences.getString("tokken", null);
+        if (tokken != null) {
+            String from = sharedPreferences.getString("from", null);
+            if (from != null) {
+                try {
+                    Date date = sdf.parse(from);
+
+                    long time = date.getTime();
+
+                    time += 86400000;
+
+                    from = sdf.format(new Date(time));
+
+                    toolbarDate.setText(from);
+                    sharedPreferences.edit().putString("from", from).apply();
+                    sharedPreferences.edit().putString("to", from).apply();
+
+                    swipeRefreshLayout.setRefreshing(true);
+
+                    onRefresh();
+
+                } catch (ParseException e) {
+                    Log.d("error", e.getMessage());
+                }
+            }
+        } else {
+            Snackbar.make(fab, "Вход не выполнен!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+    }
+
+    @OnClick(R.id.minus_day)
+    void minusDayClick() {
+        String tokken = sharedPreferences.getString("tokken", null);
+        if (tokken != null) {
+            String from = sharedPreferences.getString("from", null);
+            if (from != null) {
+                try {
+                    Date date = sdf.parse(from);
+
+                    long time = date.getTime();
+
+                    time -= 86400000;
+
+                    from = sdf.format(new Date(time));
+
+                    toolbarDate.setText(from);
+                    sharedPreferences.edit().putString("from", from).apply();
+                    sharedPreferences.edit().putString("to", from).apply();
+
+                    swipeRefreshLayout.setRefreshing(true);
+
+                    onRefresh();
+
+                } catch (ParseException e) {
+                    Log.d("error", e.getMessage());
+                }
+            }
+        } else {
+            Snackbar.make(fab, "Вход не выполнен!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
     }
 
 
@@ -143,6 +221,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             dpd.setVersion(DatePickerDialog.Version.VERSION_2);
             dpd.show(getFragmentManager(), "Выберите дату");
             swipeRefreshLayout.setRefreshing(true);
+            toolbarDate.setText(sharedPreferences.getString("from", "Выберите дату!"));
             dpd.setOnDismissListener(dialogInterface -> onRefresh());
             return true;
         }
@@ -204,44 +283,46 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                                 .setAction("Action", null).show();
 
 
-                        LoriApiClass.getApi().getTags(tokken).enqueue(new Callback<List<Object>>() {
+                        LoriApiClass.getApi().getTags(tokken).enqueue(new Callback<List<Tag>>() {
                             @Override
-                            public void onResponse(@NonNull Call<List<Object>> call, @NonNull Response<List<Object>> response) {
-                                if(response.code()==200) {
-                                    if(response.body()!=null) {
+                            public void onResponse(@NonNull Call<List<Tag>> call, @NonNull Response<List<Tag>> response) {
+                                if (response.code() == 200) {
+                                    if (response.body() != null) {
                                         Log.d("tagsBody", response.body().toString());
-                                    }
-                                    else {
+                                    } else {
                                         Log.d("tags", null);
                                     }
-                                }
-                                else {
+                                } else {
                                     Log.d("tags", String.valueOf(response.code()));
-                                    Log.d("tags",response.message());
+                                    Log.d("tags", response.message());
                                 }
                             }
 
                             @Override
-                            public void onFailure(@NonNull Call<List<Object>> call, @NonNull Throwable t) {
+                            public void onFailure(@NonNull Call<List<Tag>> call, @NonNull Throwable t) {
                                 Log.d("tags", t.getMessage());
                                 Log.d("tags", t.getLocalizedMessage());
                             }
                         });
 
+                        onRefresh();
                     } else {
                         Snackbar.make(fab, "ошибка : " + code, Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
+                        onRefresh();
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
 
+                    onRefresh();
                     Snackbar.make(fab, "Нет коннекта с сервером!", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
             });
         } else {
+            onRefresh();
             Snackbar.make(fab, "Проверь настройки!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
@@ -282,6 +363,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                         if (timeEntries != null) {
 
+                            for (TimeEntry vo : timeEntries) {
+                                Log.d("TE:", vo.toString());
+                            }
+
                             realm.beginTransaction();
                             for (TimeEntry vo : timeEntries) {
                                 realm.copyToRealmOrUpdate(vo);
@@ -300,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         }
                     } else {
                         list.clear();
-                        list.addAll(realm.where(TimeEntry.class).equalTo("date",from ).findAllAsync());
+                        list.addAll(realm.where(TimeEntry.class).equalTo("date", from).findAllAsync());
                         adapterListEvent.notifyDataSetChanged();
                         eventList.invalidate();
 
@@ -313,13 +398,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 @Override
                 public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
                     list.clear();
-                    list.addAll(realm.where(TimeEntry.class).equalTo("date",from ).findAllAsync());
+                    list.addAll(realm.where(TimeEntry.class).equalTo("date", from).findAllAsync());
                     adapterListEvent.notifyDataSetChanged();
                     eventList.invalidate();
 
                     Log.d("error", t.getMessage());
 
-                    Snackbar.make(fab, "Обновить данные не удалось: "+ t.getLocalizedMessage(), Snackbar.LENGTH_LONG)
+                    Snackbar.make(fab, "Обновить данные не удалось: " + t.getLocalizedMessage(), Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                     swipeRefreshLayout.setRefreshing(false);
                 }
@@ -334,13 +419,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             Calendar calendar = Calendar.getInstance();
             calendar.set(year, monthOfYear, dayOfMonth);
 
-            String formDate=sdf.format(calendar.getTime());
+            String formDate = sdf.format(calendar.getTime());
 
             sharedPreferences.edit().putString("from", formDate).apply();
 
             //calendar.add(Calendar.DATE, 1);
 
-            formDate=sdf.format(calendar.getTime());
+            formDate = sdf.format(calendar.getTime());
 
             sharedPreferences.edit().putString("to", formDate).apply();
 

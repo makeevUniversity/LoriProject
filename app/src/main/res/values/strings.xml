@@ -20,4 +20,7 @@
     <string name="get_in_realm">Загрузить из бд</string>
     <string name="descriptionText">описание:</string>
     <string name="text_update">Обновить</string>
+    <string name="toolbar_date">Выберите дату!</string>
+    <string name="plus_btn"><![CDATA[<]]></string>
+    <string name="minus_btn"><![CDATA[>]]></string>
 </resources>

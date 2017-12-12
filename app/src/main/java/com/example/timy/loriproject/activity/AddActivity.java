@@ -23,6 +23,7 @@ import android.widget.TextView;
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.restApi.JsonHelper;
 import com.example.timy.loriproject.restApi.LoriApiClass;
+import com.example.timy.loriproject.restApi.domain.Project;
 import com.example.timy.loriproject.restApi.domain.Task;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.example.timy.loriproject.restApi.domain.User;
@@ -32,11 +33,16 @@ import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.realm.Realm;
+import io.realm.RealmObject;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -79,13 +85,18 @@ public class AddActivity extends AppCompatActivity {
     private JsonHelper jsonHelper;
     private boolean update;
     private String id;
+    private Realm realm;
+    private Map<String, ArrayList<String>> taskNameMap;
 
 
+    @SuppressLint("SimpleDateFormat")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
         ButterKnife.bind(this);
+        realm = Realm.getDefaultInstance();
+
 
         sp = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -109,8 +120,19 @@ public class AddActivity extends AppCompatActivity {
                 update = true;
                 description.setText(timeEntry.getDescription());
                 id = timeEntry.getId();
+
+                int val = Integer.parseInt(timeEntry.getTimeInMinutes());
+                int hours = val / 60;
+                int minutes = val % 60;
+
+                String s = String.format("%02d:%02d",hours,minutes);
+
+//                long msc = val * 60000;
+//                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+//                String time = simpleDateFormat.format(msc);
+                textTime.setText(s);
+
                 textDate.setText(timeEntry.getDate());
-                textTime.setText(timeEntry.getTimeInMinutes());
             }
         }
 
@@ -124,12 +146,37 @@ public class AddActivity extends AppCompatActivity {
         String tokken = sp.getString("tokken", null);
         String userId = sp.getString("userId", null);
 
+
+        if (time == null || time.isEmpty()) {
+            time = textTime.getText().toString();
+            if (time.isEmpty()) {
+                Snackbar.make(saveButton, "Заполните все поля!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                return;
+            }
+        }
+
+        if (strDate == null || strDate.isEmpty()) {
+            strDate = textDate.getText().toString();
+            if (strDate.isEmpty()) {
+                Snackbar.make(saveButton, "Заполните все поля!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                return;
+            }
+        }
+
         String[] hoursAndMinutes = time.split(":");
         int hours = Integer.parseInt(hoursAndMinutes[0]);
         int minutes = Integer.parseInt(hoursAndMinutes[1]);
         int timeInMinutes = hours * 60 + minutes;
         String timeInHours = String.valueOf(timeInMinutes / 60);
         String descr = description.getText().toString();
+
+        if (tokken == null || userId == null || strDate == null || taskId == null) {
+            Snackbar.make(saveButton, "Заполните все поля!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            return;
+        }
 
         if (update) {
             update(tokken, userId, id, strDate, taskId, timeInHours, String.valueOf(timeInMinutes), descr);
@@ -190,7 +237,7 @@ public class AddActivity extends AppCompatActivity {
 
 
     private void update(String tokken, String userId, String id, String date, String idTask, String hours, String minutes, String description) {
-        String body = jsonHelper.getJsonTimeEntryUpdate(id, date, idTask, userId, hours, minutes, "меня проапдейтили").toString();
+        String body = jsonHelper.getJsonTimeEntryUpdate(id, date, idTask, userId, hours, minutes, description).toString();
         LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
@@ -237,45 +284,71 @@ public class AddActivity extends AppCompatActivity {
                         if (response.body() != null) {
                             List<Task> tasks = response.body();
 
-                            List<String> projectsName = new ArrayList<>();
-                            List<String> tasksName = new ArrayList<>();
+                            if (tasks == null) {
+                                return;
+                            }
 
-                            if (tasks != null) {
-                                for (Task vo : tasks) {
-                                    if (!projectsName.contains(vo.getProject().getName())) {
-                                        projectsName.add(vo.getProject().getName());
-                                    }
-                                    tasksName.add(vo.getName());
+                            List<String> projectNameList = new ArrayList<>();
+                            taskNameMap = new HashMap<>();
+
+                            for (Task vo : tasks) {
+                                if (!projectNameList.contains(vo.getProject().getName())) {
+                                    projectNameList.add(vo.getProject().getName());
                                 }
 
-                                spinnerProject.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, projectsName));
-                                spinnerProject.setSelection(0);
+                                if (taskNameMap.get(vo.getProject().getName()) == null) {
+                                    ArrayList<String> arrayList = new ArrayList<>();
+                                    arrayList.add(vo.getName());
+                                    taskNameMap.put(vo.getProject().getName(), arrayList);
+                                } else {
+                                    List<String> list = taskNameMap.get(vo.getProject().getName());
 
-                                spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, tasksName));
-                                spinnerTask.setSelection(0);
+                                    if (!list.contains(vo.getName())) {
+                                        list.add(vo.getName());
+                                    }
+                                }
+                            }
 
-                                spinnerTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                    @Override
-                                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                                        String taskName = (String) spinnerTask.getSelectedItem();
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                            taskId = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get().getId();
-                                        } else {
-                                            for (Task vo : tasks) {
-                                                if (vo.getName().equals(taskName)) {
-                                                    taskId = vo.getId();
-                                                    break;
-                                                }
+                            spinnerProject.setAdapter(new ArrayAdapter<>(getApplication(), R.layout.spinner_item, projectNameList));
+                            spinnerProject.setSelection(0);
+
+                            spinnerProject.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                @Override
+                                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                    String projectName = (String) spinnerProject.getSelectedItem();
+
+                                    spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, taskNameMap.get(projectName)));
+                                    spinnerTask.setSelection(0);
+                                }
+
+                                @Override
+                                public void onNothingSelected(AdapterView<?> parent) {
+
+                                }
+                            });
+
+                            spinnerTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                @Override
+                                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                    String taskName = (String) spinnerTask.getSelectedItem();
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                        Task task = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get();
+                                        taskId = task.getId();
+                                    } else {
+                                        for (Task vo : tasks) {
+                                            if (vo.getName().equals(taskName)) {
+                                                taskId = vo.getId();
+                                                break;
                                             }
                                         }
                                     }
+                                }
 
-                                    @Override
-                                    public void onNothingSelected(AdapterView<?> parent) {
+                                @Override
+                                public void onNothingSelected(AdapterView<?> parent) {
 
-                                    }
-                                });
-                            }
+                                }
+                            });
                         }
                     }
 

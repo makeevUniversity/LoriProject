@@ -8,6 +8,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
+import java.util.List;
 
 import io.realm.RealmObject;
 import io.realm.annotations.Ignore;
@@ -27,6 +28,9 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
     @SerializedName("task")
     @Expose
     private Task task;
+//    @SerializedName("activityType")
+//    @Expose
+//    private ActivityType activityType;
     @SerializedName("createTs")
     @Expose
     private String createTs;
@@ -66,11 +70,14 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
     @SerializedName("updateTs")
     @Expose
     private String updateTs;
-
     @SerializedName("updatedBy")
     @Expose
     @Ignore
     private Object updatedBy;
+    @SerializedName("tags")
+    @Expose
+    @Ignore
+    private List<Tag> tags;
 
     public final static Parcelable.Creator<TimeEntry> CREATOR = new Creator<TimeEntry>() {
 
@@ -91,6 +98,8 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
             instance.updateTs = ((String) in.readValue((String.class.getClassLoader())));
             instance.updatedBy = ((Object) in.readValue((Object.class.getClassLoader())));
             instance.task = (Task) in.readValue(Task.class.getClassLoader());
+//            instance.activityType=(ActivityType) in.readValue(ActivityType.class.getClassLoader());
+//            instance.tags = (List<Tag>) in.readValue(Tag.class.getClassLoader());
             return instance;
         }
 
@@ -100,6 +109,7 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
 
     };
     private final static long serialVersionUID = -4499326040926321005L;
+
     public String getId() {
         return id;
     }
@@ -212,6 +222,14 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
         this.updatedBy = updatedBy;
     }
 
+    public  List<Tag> getTag() {
+        return tags;
+    }
+
+    public void setTag( List<Tag> tags) {
+        this.tags = tags;
+    }
+
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeValue(id);
         dest.writeValue(createTs);
@@ -227,6 +245,9 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
         dest.writeValue(timeInMinutes);
         dest.writeValue(updateTs);
         dest.writeValue(updatedBy);
+//        dest.writeValue(activityType);
+        dest.writeValue(task);
+//        dest.writeValue(tag);
     }
 
     public int describeContents() {
@@ -239,5 +260,94 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
 
     public void setTask(Task task) {
         this.task = task;
+    }
+
+//    public ActivityType getActivityType() {
+//        return activityType;
+//    }
+//
+//    public void setActivityType(ActivityType activityType) {
+//        this.activityType = activityType;
+//    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TimeEntry timeEntry = (TimeEntry) o;
+
+        if (id != null ? !id.equals(timeEntry.id) : timeEntry.id != null) return false;
+        if (task != null ? !task.equals(timeEntry.task) : timeEntry.task != null) return false;
+        if (createTs != null ? !createTs.equals(timeEntry.createTs) : timeEntry.createTs != null)
+            return false;
+        if (createdBy != null ? !createdBy.equals(timeEntry.createdBy) : timeEntry.createdBy != null)
+            return false;
+        if (date != null ? !date.equals(timeEntry.date) : timeEntry.date != null) return false;
+        if (deleteTs != null ? !deleteTs.equals(timeEntry.deleteTs) : timeEntry.deleteTs != null)
+            return false;
+        if (deletedBy != null ? !deletedBy.equals(timeEntry.deletedBy) : timeEntry.deletedBy != null)
+            return false;
+        if (description != null ? !description.equals(timeEntry.description) : timeEntry.description != null)
+            return false;
+        if (rejectionReason != null ? !rejectionReason.equals(timeEntry.rejectionReason) : timeEntry.rejectionReason != null)
+            return false;
+        if (status != null ? !status.equals(timeEntry.status) : timeEntry.status != null)
+            return false;
+        if (taskName != null ? !taskName.equals(timeEntry.taskName) : timeEntry.taskName != null)
+            return false;
+        if (timeInHours != null ? !timeInHours.equals(timeEntry.timeInHours) : timeEntry.timeInHours != null)
+            return false;
+        if (timeInMinutes != null ? !timeInMinutes.equals(timeEntry.timeInMinutes) : timeEntry.timeInMinutes != null)
+            return false;
+        if (updateTs != null ? !updateTs.equals(timeEntry.updateTs) : timeEntry.updateTs != null)
+            return false;
+        if (updatedBy != null ? !updatedBy.equals(timeEntry.updatedBy) : timeEntry.updatedBy != null)
+            return false;
+//        return tag != null ? tag.equals(timeEntry.tag) : timeEntry.tag == null;
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (task != null ? task.hashCode() : 0);
+        result = 31 * result + (createTs != null ? createTs.hashCode() : 0);
+        result = 31 * result + (createdBy != null ? createdBy.hashCode() : 0);
+        result = 31 * result + (date != null ? date.hashCode() : 0);
+        result = 31 * result + (deleteTs != null ? deleteTs.hashCode() : 0);
+        result = 31 * result + (deletedBy != null ? deletedBy.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (rejectionReason != null ? rejectionReason.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (taskName != null ? taskName.hashCode() : 0);
+        result = 31 * result + (timeInHours != null ? timeInHours.hashCode() : 0);
+        result = 31 * result + (timeInMinutes != null ? timeInMinutes.hashCode() : 0);
+        result = 31 * result + (updateTs != null ? updateTs.hashCode() : 0);
+        result = 31 * result + (updatedBy != null ? updatedBy.hashCode() : 0);
+//        result = 31 * result + (tag != null ? tag.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TimeEntry{" +
+                "id='" + id + '\'' +
+                ", task=" + task +
+                ", createTs='" + createTs + '\'' +
+                ", createdBy='" + createdBy + '\'' +
+                ", date='" + date + '\'' +
+                ", deleteTs=" + deleteTs +
+                ", deletedBy=" + deletedBy +
+                ", description='" + description + '\'' +
+                ", rejectionReason=" + rejectionReason +
+                ", status='" + status + '\'' +
+                ", taskName='" + taskName + '\'' +
+                ", timeInHours='" + timeInHours + '\'' +
+                ", timeInMinutes='" + timeInMinutes + '\'' +
+                ", updateTs='" + updateTs + '\'' +
+                ", updatedBy=" + updatedBy +
+                ", tags=" + tags +
+                '}';
     }
 }

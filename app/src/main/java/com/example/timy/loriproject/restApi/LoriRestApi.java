@@ -1,5 +1,6 @@
 package com.example.timy.loriproject.restApi;
 
+import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.Task;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.example.timy.loriproject.restApi.domain.User;
@@ -47,8 +48,7 @@ public interface LoriRestApi {
             @Query("login") String login);
 
     @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_TAG + "&q=" + QUERY_GET_TAGS)
-    //TODO
-    Call<List<Object>> getTags(@Query("s") String tokken);
+    Call<List<Tag>> getTags(@Query("s") String tokken);
 
 
     @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_TIME_ENTRIES + "&q=" + QUERY_GET_TIME_ENTRIES)

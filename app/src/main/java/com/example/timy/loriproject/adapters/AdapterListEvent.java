@@ -25,6 +25,7 @@ import com.example.timy.loriproject.restApi.LoriApiClass;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import butterknife.BindView;
@@ -43,12 +44,12 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
     private Realm realm;
     private Context context;
 
-    public AdapterListEvent(List<TimeEntry> timeEntries, SharedPreferences sharedPreferences,Context context) {
+    public AdapterListEvent(List<TimeEntry> timeEntries, SharedPreferences sharedPreferences, Context context) {
         this.timeEntries = timeEntries;
         AdapterListEvent.sharedPreferences = sharedPreferences;
         this.jsonHelper = new JsonHelper();
         realm = Realm.getDefaultInstance();
-        this.context=context;
+        this.context = context;
     }
 
     @Override
@@ -69,9 +70,24 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         holder.taskName.setText(vo.getTaskName());
         holder.date.setText("Дата: " + vo.getDate());
         holder.taskName.setText("Задача: " + vo.getTaskName());
-        holder.projectName.setText("Проект: " + vo.getTask().getName());
-        holder.time.setText("Минут затраченно: " + vo.getTimeInMinutes());
+        holder.projectName.setText("Проект: " + vo.getTask().getProject().getName());
+
+        int val = Integer.parseInt(vo.getTimeInMinutes());
+//        long msc = val * 60000;
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+//        String time = simpleDateFormat.format(msc);
+
+        int hours = val / 60;
+        int minutes = val % 60;
+
+        String s = String.format("%02d:%02d", hours, minutes);
+
+        holder.time.setText("Потраченно : " + s);
         holder.description.setText(vo.getDescription());
+//        if (vo.getActivityType() != null) {
+//            holder.activity.setText("Активность :" + vo.getActivityType().getName());
+//        }
+//        holder.tag.setText("#"+vo.getTag());
 
 
         String tokken = sharedPreferences.getString("tokken", null);
@@ -101,7 +117,7 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         }));
 
         holder.updateBtn.setOnClickListener(v -> {
-            Intent intent=new Intent(context, AddActivity.class);
+            Intent intent = new Intent(context, AddActivity.class);
             intent.putExtra("timeEntry", (Serializable) vo);
             context.startActivity(intent);
         });
@@ -137,6 +153,9 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
 
         @BindView(R.id.time_entry_descr)
         TextView description;
+
+        @BindView(R.id.time_entry_activity)
+        TextView activity;
 
 
         public EventListAdapter(View itemView) {
