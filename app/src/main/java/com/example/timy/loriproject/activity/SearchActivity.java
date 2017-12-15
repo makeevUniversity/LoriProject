@@ -14,6 +14,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,6 +27,8 @@ import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.activity.invariants.TypeRadioBtnSelected;
 import com.example.timy.loriproject.adapters.AdapterListEvent;
 import com.example.timy.loriproject.restApi.LoriApiClass;
+import com.example.timy.loriproject.restApi.domain.Project;
+import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
@@ -117,14 +120,10 @@ public class SearchActivity extends AppCompatActivity {
         RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
         recyclerView.setItemAnimator(itemAnimator);
 
-        List<String> projectsName = new ArrayList<>();
-        projectsName.add("Couch DB");
-        projectsName.add("Cassandra");
-        spinner.setAdapter(new ArrayAdapter<>(getApplication(), R.layout.spinner_item, projectsName));
-        spinner.setSelection(0);
+        getProjects();
 
         projectNameRadioBtn.setChecked(true);
-        typeRadioBtnSelected=TypeRadioBtnSelected.PROJECT;
+        typeRadioBtnSelected = TypeRadioBtnSelected.PROJECT;
 
         downloadEntity("1999-01-01", "2025-01-01");
 
@@ -175,12 +174,15 @@ public class SearchActivity extends AppCompatActivity {
     @OnClick(R.id.search_fab)
     void searchClick() {
 
+        hideKeyboard();
+
         if (typeRadioBtnSelected.equals(TypeRadioBtnSelected.DATE)) {
-            String from=searchTextFrom.getText().toString();
-            String to=searchTextTo.getText().toString();
-            if(from.equals("От") || to.equals("До")){
+            String from = searchTextFrom.getText().toString();
+            String to = searchTextTo.getText().toString();
+            if (from.equals("От") || to.equals("До")) {
                 Snackbar.make(fab, "Выберите временной промежуток!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                return;
             }
             downloadEntity(searchTextFrom.getText().toString(), searchTextTo.getText().toString());
         }
@@ -191,6 +193,11 @@ public class SearchActivity extends AppCompatActivity {
             adapterListEvent.notifyDataSetChanged();
         }
         if (typeRadioBtnSelected.equals(TypeRadioBtnSelected.PROJECT)) {
+            if(spinner.getSelectedItem()==null){
+                Snackbar.make(fab, "Выберите проект!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                return;
+            }
             String projectName = spinner.getSelectedItem().toString();
             list.clear();
             List<TimeEntry> timeEntries = realm.where(TimeEntry.class).equalTo("task.project.name", projectName).findAll();
@@ -238,6 +245,57 @@ public class SearchActivity extends AppCompatActivity {
 
     }
 
+    private void getProjects() {
+
+        String tokken = sp.getString("tokken", null);
+
+        if (tokken == null) {
+            Snackbar.make(fab, "Нет коннекта с сервером/токкен не получен!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            return;
+        }
+
+        LoriApiClass.getApi().getProjects(tokken).enqueue(new Callback<List<Project>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Project>> call, @NonNull Response<List<Project>> response) {
+                List<String> projectsName = new ArrayList<>();
+
+                if (response.code() == 200) {
+                    if (response.body() != null) {
+                        List<Project> projects = response.body();
+
+                        for (Project vo : projects) {
+                            projectsName.add(vo.getName());
+                        }
+
+                        spinner.setAdapter(new ArrayAdapter<>(getApplication(), R.layout.spinner_item, projectsName));
+                        spinner.setSelection(0);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<Project>> call, @NonNull Throwable t) {
+                List<String> projectsName = new ArrayList<>();
+
+                List<Project> projects = realm.where(Project.class).findAll();
+                if (projects != null && !projects.isEmpty()) {
+                    for (Project vo : projects) {
+                        projectsName.add(vo.getName());
+                    }
+                } else {
+                    projectsName.add("Couch DB");
+                    projectsName.add("Cassandra");
+                }
+                spinner.setAdapter(new ArrayAdapter<>(getApplication(), R.layout.spinner_item, projectsName));
+                spinner.setSelection(0);
+                Snackbar.make(fab, "Нет коннекта с сервером!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+
+    }
+
     public static class WeekPickerFragmentFrom extends DialogFragment implements DatePickerDialog.OnDateSetListener {
 
         @Override
@@ -270,6 +328,11 @@ public class SearchActivity extends AppCompatActivity {
             calendarSelectedTo.set(year, monthOfYear, dayOfMonth);
 
         }
+    }
+
+    private void hideKeyboard(){
+        InputMethodManager inputMethodManager= (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
 

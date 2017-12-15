@@ -1,12 +1,13 @@
 package com.example.timy.loriproject.activity;
 
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -70,6 +71,8 @@ public class SettingsActivity extends AppCompatActivity {
         String host = editHostTextView.getText().toString();
         String port = editPortTextView.getText().toString();
 
+        hideKeyboard();
+
         if(!login.isEmpty() && !pass.isEmpty() && !host.isEmpty() && !port.isEmpty()) {
             sp.edit().putString("login", login).apply();
             sp.edit().putString("pass", pass).apply();
@@ -123,6 +126,11 @@ public class SettingsActivity extends AppCompatActivity {
             Snackbar.make(saveButton, "Проверь настройки!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
+    }
+
+    private void hideKeyboard(){
+        InputMethodManager inputMethodManager= (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
 }

@@ -45,7 +45,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="0.1"
                     android:hint="Введите описание: "
-                    android:paddingTop="15dp" />
+                    android:paddingTop="15dp"
+                    android:inputType="text"/>
 
                 <Spinner
                     android:id="@+id/spinner_search"
