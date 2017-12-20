@@ -24,4 +24,5 @@
     <string name="plus_btn"><![CDATA[<]]></string>
     <string name="minus_btn"><![CDATA[>]]></string>
     <string name="search_text">Поиск</string>
+    <string name="spinner_tag">Выберите тег</string>
 </resources>

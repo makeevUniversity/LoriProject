@@ -9,9 +9,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -20,12 +18,11 @@ import android.widget.TextView;
 
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.activity.AddActivity;
-import com.example.timy.loriproject.restApi.JsonHelper;
 import com.example.timy.loriproject.restApi.LoriApiClass;
+import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 import butterknife.BindView;
@@ -40,14 +37,12 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
 
     private List<TimeEntry> timeEntries;
     private static SharedPreferences sharedPreferences;
-    private JsonHelper jsonHelper;
     private Realm realm;
     private Context context;
 
     public AdapterListEvent(List<TimeEntry> timeEntries, SharedPreferences sharedPreferences, Context context) {
         this.timeEntries = timeEntries;
         AdapterListEvent.sharedPreferences = sharedPreferences;
-        this.jsonHelper = new JsonHelper();
         realm = Realm.getDefaultInstance();
         this.context = context;
     }
@@ -71,6 +66,16 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         holder.date.setText("Дата: " + vo.getDate());
         holder.taskName.setText("Задача: " + vo.getTaskName());
         holder.projectName.setText("Проект: " + vo.getTask().getProject().getName());
+        if (vo.getTags() != null && !vo.getTags().isEmpty()) {
+            List<Tag> tags = vo.getTags();
+            StringBuilder tagStr = new StringBuilder();
+            for (Tag tag : tags) {
+                tagStr.append("#").append(tag.getName());
+            }
+            holder.activity.setText(tagStr);
+        } else {
+            holder.activity.setText("");
+        }
 
         int val = Integer.parseInt(vo.getTimeInMinutes());
         int hours = val / 60;
@@ -81,33 +86,36 @@ public class AdapterListEvent extends RecyclerView.Adapter<AdapterListEvent.Even
         holder.description.setText(vo.getDescription());
 
         String tokken = sharedPreferences.getString("tokken", null);
-        String body = jsonHelper.getJsonTimeEntryDelete(timeEntries.get(position)).toString();
 
-        holder.removeBtn.setOnClickListener(v -> LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
-            @Override
-            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-                String id = timeEntries.get(position).getId();
+        holder.removeBtn.setOnClickListener(v -> LoriApiClass.getApi().deleteTimeEntry(timeEntries.get(position).getId(), "Bearer " + tokken)
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                        String id = timeEntries.get(position).getId();
 
-                realm.executeTransactionAsync(realm -> realm.where(TimeEntry.class)
-                        .equalTo("id", id)
-                        .findAll()
-                        .deleteAllFromRealm());
-                timeEntries.remove(position);
-                notifyItemRemoved(position);
-                notifyItemRangeChanged(position, timeEntries.size());
-            }
+                        realm.executeTransactionAsync(realm -> realm.where(TimeEntry.class)
+                                .equalTo("id", id)
+                                .findAll()
+                                .deleteAllFromRealm());
+                        timeEntries.remove(position);
+                        notifyItemRemoved(position);
+                        notifyItemRangeChanged(position, timeEntries.size());
+                    }
 
-            @Override
-            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
-                Snackbar.make(holder.cardView, "Нет связи с сервером!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                Log.d("error", t.getMessage());
-            }
-        }));
+                    @Override
+                    public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                        Snackbar.make(holder.cardView, "Нет связи с сервером!", Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                        Log.d("error", t.getMessage());
+                    }
+                }));
 
         holder.updateBtn.setOnClickListener(v -> {
             Intent intent = new Intent(context, AddActivity.class);
-            intent.putExtra("timeEntry", (Serializable) vo);
+            intent.putExtra("timeEntry", vo.getId());
+            intent.putExtra("timeEntryDate", vo.getDate());
+            intent.putExtra("timeEntryTimeInMinutes", vo.getTimeInMinutes());
+            intent.putExtra("timeEntryDesc", vo.getDescription());
             context.startActivity(intent);
         });
     }

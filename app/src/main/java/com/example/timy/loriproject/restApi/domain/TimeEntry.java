@@ -8,8 +8,8 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
-import java.util.List;
 
+import io.realm.RealmList;
 import io.realm.RealmObject;
 import io.realm.annotations.Ignore;
 import io.realm.annotations.PrimaryKey;
@@ -28,9 +28,9 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
     @SerializedName("task")
     @Expose
     private Task task;
-//    @SerializedName("activityType")
-//    @Expose
-//    private ActivityType activityType;
+    @SerializedName("user")
+    @Expose
+    private User user;
     @SerializedName("createTs")
     @Expose
     private String createTs;
@@ -76,8 +76,9 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
     private Object updatedBy;
     @SerializedName("tags")
     @Expose
-    @Ignore
-    private List<Tag> tags;
+    private RealmList<Tag> tags;
+
+
 
     public final static Parcelable.Creator<TimeEntry> CREATOR = new Creator<TimeEntry>() {
 
@@ -98,8 +99,8 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
             instance.updateTs = ((String) in.readValue((String.class.getClassLoader())));
             instance.updatedBy = ((Object) in.readValue((Object.class.getClassLoader())));
             instance.task = (Task) in.readValue(Task.class.getClassLoader());
-//            instance.activityType=(ActivityType) in.readValue(ActivityType.class.getClassLoader());
-//            instance.tags = (List<Tag>) in.readValue(Tag.class.getClassLoader());
+            instance.user = (User) in.readValue(User.class.getClassLoader());
+            instance.tags = (RealmList<Tag>) in.readValue(Tag.class.getClassLoader());
             return instance;
         }
 
@@ -222,13 +223,22 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
         this.updatedBy = updatedBy;
     }
 
-    public  List<Tag> getTag() {
+    public  RealmList<Tag> getTags() {
         return tags;
     }
 
-    public void setTag( List<Tag> tags) {
+    public void setTags( RealmList<Tag> tags) {
         this.tags = tags;
     }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
 
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeValue(id);
@@ -245,9 +255,9 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
         dest.writeValue(timeInMinutes);
         dest.writeValue(updateTs);
         dest.writeValue(updatedBy);
-//        dest.writeValue(activityType);
         dest.writeValue(task);
-//        dest.writeValue(tag);
+        dest.writeValue(user);
+        dest.writeValue(tags);
     }
 
     public int describeContents() {
@@ -262,13 +272,6 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
         this.task = task;
     }
 
-//    public ActivityType getActivityType() {
-//        return activityType;
-//    }
-//
-//    public void setActivityType(ActivityType activityType) {
-//        this.activityType = activityType;
-//    }
 
     @Override
     public boolean equals(Object o) {
@@ -304,8 +307,8 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
             return false;
         if (updatedBy != null ? !updatedBy.equals(timeEntry.updatedBy) : timeEntry.updatedBy != null)
             return false;
-//        return tag != null ? tag.equals(timeEntry.tag) : timeEntry.tag == null;
-        return false;
+        return tags != null ? tags.equals(timeEntry.tags) : timeEntry.tags == null;
+//        return false;
     }
 
     @Override
@@ -325,7 +328,6 @@ public class TimeEntry extends RealmObject implements Serializable, Parcelable {
         result = 31 * result + (timeInMinutes != null ? timeInMinutes.hashCode() : 0);
         result = 31 * result + (updateTs != null ? updateTs.hashCode() : 0);
         result = 31 * result + (updatedBy != null ? updatedBy.hashCode() : 0);
-//        result = 31 * result + (tag != null ? tag.hashCode() : 0);
         return result;
     }
 

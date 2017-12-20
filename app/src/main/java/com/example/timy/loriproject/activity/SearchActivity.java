@@ -32,9 +32,11 @@ import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.BindView;
@@ -125,8 +127,6 @@ public class SearchActivity extends AppCompatActivity {
         projectNameRadioBtn.setChecked(true);
         typeRadioBtnSelected = TypeRadioBtnSelected.PROJECT;
 
-        downloadEntity("1999-01-01", "2025-01-01");
-
 
         radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
             switch (checkedId) {
@@ -143,6 +143,11 @@ public class SearchActivity extends AppCompatActivity {
                     break;
             }
         });
+
+        list.clear();
+        list.addAll(realm.where(TimeEntry.class).findAll());
+        recyclerView.invalidate();
+        adapterListEvent.notifyDataSetChanged();
     }
 
     @OnClick(R.id.search_btn_from)
@@ -184,7 +189,23 @@ public class SearchActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
                 return;
             }
-            downloadEntity(searchTextFrom.getText().toString(), searchTextTo.getText().toString());
+            try {
+                list.clear();
+
+                String dateStr = from;
+
+                while (!to.equals(dateStr)) {
+                    long time = sdf.parse(dateStr).getTime();
+                    list.addAll(realm.where(TimeEntry.class).equalTo("date", dateStr).findAll());
+                    time += 86400000;
+                    dateStr = sdf.format(new Date(time));
+                }
+                list.addAll(realm.where(TimeEntry.class).equalTo("date", dateStr).findAll());
+                recyclerView.invalidate();
+                adapterListEvent.notifyDataSetChanged();
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
         if (typeRadioBtnSelected.equals(TypeRadioBtnSelected.DESCRIPTION)) {
             list.clear();
@@ -193,7 +214,7 @@ public class SearchActivity extends AppCompatActivity {
             adapterListEvent.notifyDataSetChanged();
         }
         if (typeRadioBtnSelected.equals(TypeRadioBtnSelected.PROJECT)) {
-            if(spinner.getSelectedItem()==null){
+            if (spinner.getSelectedItem() == null) {
                 Snackbar.make(fab, "Выберите проект!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 return;
@@ -208,43 +229,6 @@ public class SearchActivity extends AppCompatActivity {
 
     }
 
-    private void downloadEntity(String dateFrom, String dateTo) {
-        String tokken = sp.getString("tokken", null);
-        String user = sp.getString("login", null);
-
-        LoriApiClass.getApi().getTimeEntries(tokken, user, dateFrom, dateTo).enqueue(new Callback<List<TimeEntry>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
-                List<TimeEntry> timeEntries = response.body();
-                if (timeEntries != null) {
-
-                    realm.beginTransaction();
-                    realm.copyToRealmOrUpdate(timeEntries);
-                    realm.commitTransaction();
-
-                    list.clear();
-                    list.addAll(timeEntries);
-                    recyclerView.invalidate();
-                    adapterListEvent.notifyDataSetChanged();
-
-                    Log.d("CountTE", String.valueOf(timeEntries.size()));
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
-                Snackbar.make(fab, "Нет коннекта с сервером!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-
-                list.clear();
-                list.addAll(realm.where(TimeEntry.class).findAll());
-                recyclerView.invalidate();
-                adapterListEvent.notifyDataSetChanged();
-            }
-        });
-
-    }
-
     private void getProjects() {
 
         String tokken = sp.getString("tokken", null);
@@ -255,7 +239,7 @@ public class SearchActivity extends AppCompatActivity {
             return;
         }
 
-        LoriApiClass.getApi().getProjects(tokken).enqueue(new Callback<List<Project>>() {
+        LoriApiClass.getApi().getProjects("Bearer " + tokken).enqueue(new Callback<List<Project>>() {
             @Override
             public void onResponse(@NonNull Call<List<Project>> call, @NonNull Response<List<Project>> response) {
                 List<String> projectsName = new ArrayList<>();
@@ -296,6 +280,12 @@ public class SearchActivity extends AppCompatActivity {
 
     }
 
+    private void hideKeyboard(){
+        InputMethodManager inputMethodManager= (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),InputMethodManager.HIDE_NOT_ALWAYS);
+    }
+
+
     public static class WeekPickerFragmentFrom extends DialogFragment implements DatePickerDialog.OnDateSetListener {
 
         @Override
@@ -329,12 +319,6 @@ public class SearchActivity extends AppCompatActivity {
 
         }
     }
-
-    private void hideKeyboard(){
-        InputMethodManager inputMethodManager= (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),InputMethodManager.HIDE_NOT_ALWAYS);
-    }
-
 
     @Override
     protected void onDestroy() {

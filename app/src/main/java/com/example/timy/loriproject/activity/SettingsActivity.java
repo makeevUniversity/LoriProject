@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.example.timy.loriproject.R;
 import com.example.timy.loriproject.restApi.LoriApiClass;
+import com.example.timy.loriproject.restApi.domain.Token;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -100,14 +101,14 @@ public class SettingsActivity extends AppCompatActivity {
             
             LoriApiClass.rebuildRetrofit(this);
 
-            LoriApiClass.getApi().login(login, pass).enqueue(new Callback<String>() {
+            LoriApiClass.getApi().login(login, pass,"password").enqueue(new Callback<Token>() {
                 @Override
-                public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                public void onResponse(@NonNull Call<Token> call, @NonNull Response<Token> response) {
 
                     int code = response.code();
 
-                    if (code == 200) {
-                        String tokken = response.body();
+                    if (code == 200 && response.body()!=null) {
+                        String tokken = response.body().getToken();
                         sp.edit().putString("tokken", tokken).apply();
                         finish();
                     } else {
@@ -117,7 +118,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                public void onFailure(@NonNull Call<Token> call, @NonNull Throwable t) {
                     Snackbar.make(saveButton, "Нет коннекта с сервером!", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }

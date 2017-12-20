@@ -27,6 +27,7 @@ import com.example.timy.loriproject.adapters.AdapterListEvent;
 import com.example.timy.loriproject.restApi.LoriApiClass;
 import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
+import com.example.timy.loriproject.restApi.domain.Token;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
 import java.text.ParseException;
@@ -121,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     sharedPreferences.edit().putString("to", from).apply();
 
                     swipeRefreshLayout.setRefreshing(true);
-                    onRefresh();
+                    downloadEntity();
                 } catch (ParseException e) {
                     Log.d("error", e.getMessage());
                 }
@@ -148,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     sharedPreferences.edit().putString("to", from).apply();
 
                     swipeRefreshLayout.setRefreshing(true);
-                    onRefresh();
+                    downloadEntity();
                 } catch (ParseException e) {
                     Log.d("error", e.getMessage());
                 }
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if(id==R.id.search_btn){
+        if (id == R.id.search_btn) {
             Intent intent = new Intent(this, SearchActivity.class);
             startActivity(intent);
             return true;
@@ -197,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             dpd.setVersion(DatePickerDialog.Version.VERSION_2);
             dpd.show(getFragmentManager(), "Выберите дату");
             swipeRefreshLayout.setRefreshing(true);
-            dpd.setOnDismissListener(dialogInterface -> onRefresh());
+            dpd.setOnDismissListener(dialogInterface -> downloadEntity());
             return true;
         }
 
@@ -206,35 +207,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             startActivity(intent);
             return true;
         }
-        if (id == R.id.action_close_session) {
-
-            String tokken = sharedPreferences.getString("tokken", null);
-
-            if (tokken != null) {
-
-                LoriApiClass.getApi().logout(tokken).enqueue(new Callback<Void>() {
-                    @Override
-                    public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                        Log.d("error", String.valueOf(response.code()));
-
-                        sharedPreferences.edit().remove("tokken").apply();
-
-                        Snackbar.make(fab, "Сессия закрыта", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
-                        Log.d("error", t.getMessage());
-                        Snackbar.make(fab, "Что-то пошло не так :(", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
-                    }
-                });
-
-            }
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -245,67 +217,63 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         String host = sharedPreferences.getString("host", "");
 
         if (!login.isEmpty() && !pass.isEmpty() && !port.isEmpty() && !host.isEmpty()) {
-            LoriApiClass.getApi().login(login, pass).enqueue(new Callback<String>() {
+            LoriApiClass.getApi().login(login, pass, "password").enqueue(new Callback<Token>() {
                 @Override
-                public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                public void onResponse(@NonNull Call<Token> call, @NonNull Response<Token> response) {
 
                     int code = response.code();
 
-                    if (code == 200) {
-                        String tokken = response.body();
+                    if (code == 200 && response.body() != null) {
+                        String tokken = response.body().getToken();
                         sharedPreferences.edit().putString("tokken", tokken).apply();
                         Snackbar.make(fab, "Коннект с сервером установлен!", Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
-
-
-                        LoriApiClass.getApi().getTags(tokken).enqueue(new Callback<List<Tag>>() {
-                            @Override
-                            public void onResponse(@NonNull Call<List<Tag>> call, @NonNull Response<List<Tag>> response) {
-                                if (response.code() == 200) {
-                                    if (response.body() != null) {
-                                        Log.d("tagsBody", response.body().toString());
-                                    } else {
-                                        Log.d("tags", null);
-                                    }
-                                } else {
-                                    Log.d("tags", String.valueOf(response.code()));
-                                    Log.d("tags", response.message());
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(@NonNull Call<List<Tag>> call, @NonNull Throwable t) {
-                                Log.d("tags", t.getMessage());
-                                Log.d("tags", t.getLocalizedMessage());
-                            }
-                        });
-
                         onRefresh();
                     } else {
                         Snackbar.make(fab, "ошибка : " + code, Snackbar.LENGTH_LONG)
                                 .setAction("Action", null).show();
-                        onRefresh();
+                        downloadEntity();
                     }
                 }
 
                 @Override
-                public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                public void onFailure(@NonNull Call<Token> call, @NonNull Throwable t) {
 
-                    onRefresh();
+                    downloadEntity();
                     Snackbar.make(fab, "Нет коннекта с сервером!", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
             });
         } else {
-            onRefresh();
+            downloadEntity();
             Snackbar.make(fab, "Проверь настройки!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
     }
 
+    private void downloadEntity() {
+
+        String from = sharedPreferences.getString("from", null);
+
+        list.clear();
+
+        realm.executeTransaction(realm -> {
+            List<TimeEntry> timeEntries = realm.where(TimeEntry.class).equalTo("date", from).findAll();
+            list.addAll(timeEntries);
+
+        });
+
+
+        adapterListEvent.notifyDataSetChanged();
+        eventList.invalidate();
+
+        toolbarDate.setText(sharedPreferences.getString("from", "Выберите дату!"));
+
+        swipeRefreshLayout.setRefreshing(false);
+    }
+
     @Override
     public void onRefresh() {
-
         String tokken = sharedPreferences.getString("tokken", null);
 
         if (tokken == null) {
@@ -315,71 +283,43 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             return;
         }
 
-        String user = sharedPreferences.getString("login", null);
-        String from = sharedPreferences.getString("from", null);
-        String to = sharedPreferences.getString("to", null);
+        LoriApiClass.getApi().getTimeEntries("Bearer " + tokken).enqueue(new Callback<List<TimeEntry>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
+                int code = response.code();
+                if (code == 200) {
+                    List<TimeEntry> timeEntries = response.body();
+                    if (timeEntries != null) {
 
-        if (user != null && from != null && to != null) {
+                        Log.d("downloadEntity: ", String.valueOf(timeEntries.size()));
 
-            LoriApiClass.getApi().getTimeEntries(
-                    tokken,
-                    user,
-                    from,
-                    to
-            ).enqueue(new Callback<List<TimeEntry>>() {
+//                        for (TimeEntry vo:timeEntries) {
+//                            List<Tag> tags = vo.getTags();
+//                            if (tags != null && !tags.isEmpty()) {
+//                                realm.executeTransaction(realm -> realm.copyToRealmOrUpdate(tags));
+//                                for (Tag tag:tags) {
+//                                    vo.setTag(tag);
+//                                    Log.d("Tag: ", tag.getName());
+//                                }
+//                            }
+//                        }
 
-                @Override
-                public void onResponse(@NonNull Call<List<TimeEntry>> call, @NonNull Response<List<TimeEntry>> response) {
-                    int code = response.code();
-
-                    if (code == 200) {
-
-                        List<TimeEntry> timeEntries = response.body();
-
-                        if (timeEntries != null) {
-
-                            realm.beginTransaction();
-                            realm.copyToRealmOrUpdate(timeEntries);
-                            realm.commitTransaction();
-
-                            list.clear();
-                            list.addAll(timeEntries);
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                list.stream().sorted(Comparator.comparing(TimeEntry::describeContents));
-                            } else {
-                                Collections.sort(list, (o1, o2) -> Integer.compare(o1.describeContents(), o2.describeContents()));
-                            }
-                            adapterListEvent.notifyDataSetChanged();
-                            eventList.invalidate();
-                        }
-                    } else {
-                        list.clear();
-                        list.addAll(realm.where(TimeEntry.class).equalTo("date", from).findAllAsync());
-                        adapterListEvent.notifyDataSetChanged();
-                        eventList.invalidate();
-
-                        Snackbar.make(fab, "ошибка : " + code, Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
+                        realm.executeTransaction(realm -> realm.copyToRealmOrUpdate(timeEntries));
                     }
-                    swipeRefreshLayout.setRefreshing(false);
+
                 }
+                downloadEntity();
+                swipeRefreshLayout.setRefreshing(false);
+            }
 
-                @Override
-                public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
-                    list.clear();
-                    list.addAll(realm.where(TimeEntry.class).equalTo("date", from).findAllAsync());
-                    adapterListEvent.notifyDataSetChanged();
-                    eventList.invalidate();
-
-                    Log.d("error", t.getMessage());
-
-                    Snackbar.make(fab, "Обновить данные не удалось: " + t.getLocalizedMessage(), Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                    swipeRefreshLayout.setRefreshing(false);
-                }
-            });
-        }
-        toolbarDate.setText(sharedPreferences.getString("from", "Выберите дату!"));
+            @Override
+            public void onFailure(@NonNull Call<List<TimeEntry>> call, @NonNull Throwable t) {
+                Log.d("error", t.getMessage());
+                Snackbar.make(fab, "Обновить данные не удалось: " + t.getLocalizedMessage(), Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
     }
 
     public static class WeekPickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
@@ -388,20 +328,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         public void onDateSet(DatePickerDialog view, int year, int monthOfYear, int dayOfMonth) {
             Calendar calendar = Calendar.getInstance();
             calendar.set(year, monthOfYear, dayOfMonth);
-
             String formDate = sdf.format(calendar.getTime());
-
             sharedPreferences.edit().putString("from", formDate).apply();
-
-            //calendar.add(Calendar.DATE, 1);
-
-            formDate = sdf.format(calendar.getTime());
-
-            sharedPreferences.edit().putString("to", formDate).apply();
-
             calendarSelected = Calendar.getInstance();
             calendarSelected.set(year, monthOfYear, dayOfMonth);
-
         }
     }
 

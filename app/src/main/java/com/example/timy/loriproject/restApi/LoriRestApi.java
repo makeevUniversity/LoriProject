@@ -4,72 +4,66 @@ import com.example.timy.loriproject.restApi.domain.Project;
 import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.Task;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
+import com.example.timy.loriproject.restApi.domain.Token;
 import com.example.timy.loriproject.restApi.domain.User;
 
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface LoriRestApi {
 
-    String STATIC_PATH = "app/dispatch/api/";
-    String QUERY_PATH = "query.json?";
-
-    String TYPE_USER = "sec$User";
-    String TYPE_PROJECT = "ts$Project";
-    String TYPE_TASK = "ts$Task";
-    String TYPE_TIME_ENTRIES = "ts$TimeEntry";
-    String TYPE_TAG = "ts$Tag";
+    String STATIC_PATH = "app/rest/v2/";
 
     String QUERY_GET_TIME_ENTRIES = "select+a+from+ts$TimeEntry+a+where+a.createdBy=:name+and+a.date+between+:from+and+:to&view=timeEntry-browse";
-    String QUERY_GET_USERS = "select+a+from+sec$User+a";
-    String QUERY_GET_USER = "select+a+from+sec$User+a+where+a.login=:login";
-    String QUERY_GET_PROJECTS = "select+a+from+ts$Project+a";
-    String QUERY_GET_TASKS = "select+a+from+ts$Task+a&view=_minimal";
-    String QUERY_GET_TAGS = "select+a+from+ts$Tag+a";
 
+    @Headers({
+            "Authorization: Basic Y2xpZW50OnNlY3JldA=="
+    })
+    @FormUrlEncoded
+    @POST(STATIC_PATH + "oauth/token")
+    Call<Token> login(@Field("username") String user,
+                      @Field("password") String password,
+                      @Field("grant_type") String grantType);
 
-    @GET(STATIC_PATH + "login")
-    Call<String> login(@Query("u") String user,
-                       @Query("p") String password);
+    @GET(STATIC_PATH + "userInfo")
+    Call<User> getUserEntity(@Header("Authorization") String token);
 
-    @GET(STATIC_PATH + "logout")
-    Call<Void> logout(@Query("session") String tokken);
+    @GET(STATIC_PATH + "entities/ts$Tag")
+    Call<Tag> getTags(@Header("Authorization") String token);
 
-    @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_USER + "&q=" + QUERY_GET_USER)
-    Call<List<User>> getUserEntity(
-            @Query("s") String tokken,
-            @Query("login") String login);
+    @GET(STATIC_PATH + "entities/ts$Project")
+    Call<List<Project>> getProjects(@Header("Authorization") String tokken);
 
-    @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_TAG + "&q=" + QUERY_GET_TAGS)
-    Call<List<Tag>> getTags(@Query("s") String tokken);
+    @POST(STATIC_PATH + "entities/ts$TimeEntry")
+    @Headers("Content-Type: application/json")
+    Call<String> commit(@Body TimeEntry body,
+                        @Header("Authorization") String tokken);
 
-    @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_PROJECT + "&q=" + QUERY_GET_PROJECTS)
-    Call<List<Project>> getProjects(@Query("s") String tokken);
-
-
-    @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_TIME_ENTRIES + "&q=" + QUERY_GET_TIME_ENTRIES)
+    @GET(STATIC_PATH + "entities/ts$TimeEntry?view=timeEntry-full&sort=-date")
     Call<List<TimeEntry>> getTimeEntries(
-            @Query("s") String tokken,
-            @Query("name") String user,
-            @Query("from") String fromDate,
-            @Query("to") String toDate
+            @Header("Authorization") String tokken
     );
 
-    @POST(STATIC_PATH + "commit?")
-    @Headers("Content-Type: application/json")
-    Call<String> commit(@Query("s") String tokken,
-                        @Body String body);
+    @GET(STATIC_PATH + "entities/ts$Task?view=task-full")
+    Call<List<Task>> getTasks(@Header("Authorization") String tokken);
 
-    @GET(STATIC_PATH + QUERY_PATH + "e=" + TYPE_TASK + "&q=" + QUERY_GET_TASKS)
-    Call<List<Task>> getTasks(@Query("s") String tokken);
+    @DELETE(STATIC_PATH + "entities/ts$TimeEntry/{id}")
+    Call<Void> deleteTimeEntry(@Path("id") String id, @Header("Authorization") String tokken);
 
-
+    @PUT(STATIC_PATH + "entities/ts$TimeEntry/{id}")
+    Call<TimeEntry> updateTimeEntry(@Path("id") String id, @Body TimeEntry timeEntry, @Header("Authorization") String tokken);
 }
 
 

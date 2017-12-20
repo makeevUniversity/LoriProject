@@ -13,7 +13,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -21,8 +20,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.example.timy.loriproject.R;
-import com.example.timy.loriproject.restApi.JsonHelper;
 import com.example.timy.loriproject.restApi.LoriApiClass;
+import com.example.timy.loriproject.restApi.domain.Project;
+import com.example.timy.loriproject.restApi.domain.Tag;
 import com.example.timy.loriproject.restApi.domain.Task;
 import com.example.timy.loriproject.restApi.domain.TimeEntry;
 import com.example.timy.loriproject.restApi.domain.User;
@@ -40,6 +40,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.realm.Realm;
+import io.realm.RealmList;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -73,15 +74,17 @@ public class AddActivity extends AppCompatActivity {
     @BindView(R.id.text_description)
     TextView description;
 
+    @BindView(R.id.spinner_tag)
+    Spinner spinnerTag;
+
 
     private SharedPreferences sp;
     public static Calendar date;
     private static String time;
     private String taskId;
     private String strDate;
-    private JsonHelper jsonHelper;
     private boolean update;
-    private String id;
+    private TimeEntry timeEntry;
     private Realm realm;
     private Map<String, ArrayList<String>> taskNameMap;
 
@@ -104,31 +107,33 @@ public class AddActivity extends AppCompatActivity {
             toolbar.setNavigationOnClickListener(v -> onBackPressed());
         }
 
-        jsonHelper = new JsonHelper();
         update = false;
         String tokken = sp.getString("tokken", null);
 
         Bundle bundle = getIntent().getExtras();
 
         if (bundle != null) {
-            TimeEntry timeEntry = (TimeEntry) bundle.getSerializable("timeEntry");
-            if (timeEntry != null) {
-                update = true;
-                description.setText(timeEntry.getDescription());
-                id = timeEntry.getId();
+            String timeEntryId = bundle.getString("timeEntry");
+            String timeEntryDate = bundle.getString("timeEntryDate");
+            String timeEntryTimeInMinutes = bundle.getString("timeEntryTimeInMinutes");
+            String timeEntryDesc = bundle.getString("timeEntryDesc");
+            if (timeEntryId != null && !timeEntryId.isEmpty()) {
 
-                int val = Integer.parseInt(timeEntry.getTimeInMinutes());
+                timeEntry = new TimeEntry();
+                timeEntry.setId(timeEntryId);
+
+
+                update = true;
+                description.setText(timeEntryDesc);
+
+                int val = Integer.parseInt(timeEntryTimeInMinutes);
                 int hours = val / 60;
                 int minutes = val % 60;
 
-                String s = String.format("%02d:%02d",hours,minutes);
-
-//                long msc = val * 60000;
-//                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
-//                String time = simpleDateFormat.format(msc);
+                String s = String.format("%02d:%02d", hours, minutes);
                 textTime.setText(s);
 
-                textDate.setText(timeEntry.getDate());
+                textDate.setText(timeEntryDate);
             }
         }
 
@@ -174,10 +179,75 @@ public class AddActivity extends AppCompatActivity {
             return;
         }
 
-        if (update) {
-            update(tokken, userId, id, strDate, taskId, timeInHours, String.valueOf(timeInMinutes), descr);
+        realm.beginTransaction();
+        String idProject = realm.where(Project.class).equalTo("name", spinnerProject.getSelectedItem().toString()).findFirst().getId();
+        realm.commitTransaction();
+
+        
+        if (!update) {
+            timeEntry = new TimeEntry();
+            timeEntry.setId("NEW-ts$TimeEntry");
+            timeEntry.setTaskName(spinnerTask.getSelectedItem().toString());
+            Task newTask = new Task();
+            newTask.setId(taskId);
+            Project newProject = new Project();
+            newProject.setId(idProject);
+            User newUser = new User();
+            newUser.setId(userId);
+            newTask.setProject(newProject);
+            timeEntry.setTask(newTask);
+            timeEntry.setDate(strDate);
+            timeEntry.setUser(newUser);
+            timeEntry.setTimeInMinutes(String.valueOf(timeInMinutes));
+            timeEntry.setTimeInHours(timeInHours);
+            timeEntry.setDescription(descr);
+            RealmList<Tag> tags = new RealmList<>();
+            String tagName = String.valueOf(spinnerTag.getSelectedItem());
+
+            if (tagName != null && !tagName.isEmpty()) {
+                String tagId = realm.where(Tag.class).equalTo("name", tagName).findFirst().getId();
+                if (tagId != null) {
+                    Tag tag=new Tag();
+                    tag.setId(tagId);
+                    tags.add(tag);
+                    timeEntry.setTags(tags);
+                }
+            }
         } else {
-            save(tokken, userId, timeInHours, String.valueOf(timeInMinutes), descr);
+            timeEntry.setTaskName(spinnerTask.getSelectedItem().toString());
+
+            RealmList<Tag> tags = new RealmList<>();
+            String tagName = String.valueOf(spinnerTag.getSelectedItem());
+
+            if (tagName != null && !tagName.isEmpty()) {
+                String tagId = realm.where(Tag.class).equalTo("name", tagName).findFirst().getId();
+                if (tagId != null) {
+                    Tag tag=new Tag();
+                    tag.setId(tagId);
+                    tags.add(tag);
+                    timeEntry.setTags(tags);
+                }
+            }
+
+            Task newTask = new Task();
+            newTask.setId(taskId);
+            Project newProject = new Project();
+            newProject.setId(idProject);
+            User newUser = new User();
+            newUser.setId(userId);
+            newTask.setProject(newProject);
+            timeEntry.setTask(newTask);
+            timeEntry.setDate(strDate);
+            timeEntry.setUser(newUser);
+            timeEntry.setTimeInMinutes(String.valueOf(timeInMinutes));
+            timeEntry.setTimeInHours(timeInHours);
+            timeEntry.setDescription(descr);
+        }
+
+        if (update) {
+            update(tokken, timeEntry);
+        } else {
+            save(tokken, timeEntry);
         }
     }
 
@@ -210,21 +280,17 @@ public class AddActivity extends AppCompatActivity {
         String tokken = sp.getString("tokken", null);
 
         if (login != null && tokken != null) {
-            LoriApiClass.getApi().getUserEntity(tokken, login).enqueue(new Callback<List<User>>() {
+            LoriApiClass.getApi().getUserEntity("Bearer " + tokken).enqueue(new Callback<User>() {
                 @Override
-                public void onResponse(@NonNull Call<List<User>> call, @NonNull Response<List<User>> response) {
+                public void onResponse(@NonNull Call<User> call, @NonNull Response<User> response) {
                     int code = response.code();
-
-                    Log.d("error", String.valueOf(response.code()));
-                    Log.d("error", String.valueOf(response.body()));
-
                     if (code == 200 && response.body() != null) {
-                        sp.edit().putString("userId", response.body().get(0).getId()).apply();
+                        sp.edit().putString("userId", response.body().getId()).apply();
                     }
                 }
 
                 @Override
-                public void onFailure(@NonNull Call<List<User>> call, @NonNull Throwable t) {
+                public void onFailure(@NonNull Call<User> call, @NonNull Throwable t) {
                     Log.d("error", t.getMessage());
                 }
             });
@@ -232,12 +298,12 @@ public class AddActivity extends AppCompatActivity {
     }
 
 
-    private void update(String tokken, String userId, String id, String date, String idTask, String hours, String minutes, String description) {
-        String body = jsonHelper.getJsonTimeEntryUpdate(id, date, idTask, userId, hours, minutes, description).toString();
-        LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
-            @Override
-            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+    private void update(String tokken, TimeEntry timeEntry) {
 
+
+        LoriApiClass.getApi().updateTimeEntry(timeEntry.getId(), timeEntry, "Bearer " + tokken).enqueue(new Callback<TimeEntry>() {
+            @Override
+            public void onResponse(@NonNull Call<TimeEntry> call, @NonNull Response<TimeEntry> response) {
                 Snackbar.make(saveButton, "готово!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
 
@@ -245,19 +311,16 @@ public class AddActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<TimeEntry> call, @NonNull Throwable t) {
                 Snackbar.make(saveButton, "Нет связи с сервером!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
     }
 
-    private void save(String tokken, String userId, String timeInHours, String timeInMinutes, String descr) {
+    private void save(String tokken, TimeEntry timeEntry) {
 
-
-        String body = jsonHelper.getJsonTimeEntryAdd(strDate, taskId, userId, timeInHours, timeInMinutes, descr).toString();
-
-        LoriApiClass.getApi().commit(tokken, body).enqueue(new Callback<String>() {
+        LoriApiClass.getApi().commit(timeEntry, "Bearer " + tokken).enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 onBackPressed();
@@ -273,7 +336,7 @@ public class AddActivity extends AppCompatActivity {
     }
 
     private void updateSpinners(String tokken) {
-        LoriApiClass.getApi().getTasks(tokken).
+        LoriApiClass.getApi().getTasks("Bearer " + tokken).
                 enqueue(new Callback<List<Task>>() {
                     @Override
                     public void onResponse(@NonNull Call<List<Task>> call, @NonNull Response<List<Task>> response) {
@@ -286,6 +349,10 @@ public class AddActivity extends AppCompatActivity {
 
                             List<String> projectNameList = new ArrayList<>();
                             taskNameMap = new HashMap<>();
+
+                            realm.beginTransaction();
+                            realm.copyToRealmOrUpdate(tasks);
+                            realm.commitTransaction();
 
                             for (Task vo : tasks) {
                                 if (!projectNameList.contains(vo.getProject().getName())) {
@@ -313,8 +380,11 @@ public class AddActivity extends AppCompatActivity {
                                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                                     String projectName = (String) spinnerProject.getSelectedItem();
 
-                                    spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, taskNameMap.get(projectName)));
-                                    spinnerTask.setSelection(0);
+                                    List<String> list = taskNameMap.get(projectName);
+                                    if (list != null && !list.isEmpty()) {
+                                        spinnerTask.setAdapter(new ArrayAdapter<>(getApplicationContext(), R.layout.spinner_item, list));
+                                        spinnerTask.setSelection(0);
+                                    }
                                 }
 
                                 @Override
@@ -327,18 +397,27 @@ public class AddActivity extends AppCompatActivity {
                                 @Override
                                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                                     String taskName = (String) spinnerTask.getSelectedItem();
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                        Task task = tasks.stream().filter(p -> p.getName().equals(taskName)).findFirst().get();
-                                        taskId = task.getId();
-                                    } else {
-                                        for (Task vo : tasks) {
-                                            if (vo.getName().equals(taskName)) {
-                                                taskId = vo.getId();
-                                                break;
-                                            }
+                                    for (Task vo : tasks) {
+                                        if (vo.getName().equals(taskName)) {
+                                            taskId = vo.getId();
+                                            break;
                                         }
                                     }
+
+                                    realm.executeTransaction(realm -> {
+                                        List<Tag> tags = realm.where(Tag.class).findAll();
+                                        if (tags != null && !tags.isEmpty()) {
+                                            List<String> tagNames = new ArrayList<>();
+
+                                            for (Tag tag : tags) {
+                                                tagNames.add(tag.getName());
+                                            }
+
+                                            spinnerTag.setAdapter(new ArrayAdapter<>(getApplication(), R.layout.spinner_item, tagNames));
+                                        }
+                                    });
                                 }
+
 
                                 @Override
                                 public void onNothingSelected(AdapterView<?> parent) {
@@ -353,11 +432,6 @@ public class AddActivity extends AppCompatActivity {
 
                     }
                 });
-    }
-
-    private void hideKeyboard(){
-        InputMethodManager inputMethodManager= (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
     public static class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
